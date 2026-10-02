@@ -1,0 +1,10 @@
+{
+  "description": "Create dynamic material waves that expand from a click point with a fade effect, enhancing interactive experiences for designers and developers.",
+  "robots": {
+    "index": false
+  },
+  "accessibility": {
+    "addBypassLinks": false,
+    "ignoreReducedMotion": false
+  }
+}

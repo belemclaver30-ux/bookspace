@@ -1,0 +1,73 @@
+@import 'tailwindcss';
+
+html, body, #root {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+}
+
+:root {
+  /* Palette BookSpace */
+  --orange: #FC4E00;       /* action principale, états actifs */
+  --orange-dark: #BD3100;  /* surfaces sombres, titres */
+  --amber: #EB9F04;        /* alertes douces, « en attente » */
+  --gold: #F3BB00;         /* accents, notes, étoiles */
+  --orange-50: #FFF0E6;    /* fond teinté clair */
+  --orange-100: #FFE7D6;
+
+  --ink: #1E293B;
+  --muted: #64748B;
+  --faint: #94A3B8;
+  --line: #E2E8F0;
+  --surface: #F8FAFC;
+
+  --radius: 14px;
+  --shadow-sm: 0 1px 4px rgba(120,40,15,0.06);
+  --shadow-md: 0 4px 16px rgba(120,40,15,0.10);
+  --shadow-lg: 0 8px 32px rgba(120,40,15,0.16);
+}
+
+* { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  font-family: 'Inter', system-ui, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  background: #F1F5F9;
+  color: var(--ink);
+  /* iOS Safari : jamais de débordement horizontal (évite le dézoom global). */
+  overflow-x: hidden;
+}
+
+/* Media & contenus larges ne débordent jamais horizontalement */
+img, svg, video { max-width: 100%; height: auto; }
+input, select, textarea, button { font-family: inherit; }
+
+/* iOS : un champ dont la police < 16px force un zoom au focus qui ne revient
+   jamais — d'où l'impression que « le responsive ne marche pas ». */
+input, select, textarea { font-size: 16px; }
+
+/* Unité de hauteur qui suit la barre d'adresse mobile (iOS 15.4+, Android). */
+.min-h-screen { min-height: 100vh; min-height: 100dvh; }
+.h-screen { height: 100vh; height: 100dvh; }
+
+/* La sélection de texte reprend l'orange de marque */
+::selection { background: rgba(252, 78, 0, 0.18); }
+
+@keyframes fadeInUp {
+  from { opacity: 0; transform: translateY(16px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+@keyframes slideIn {
+  from { opacity: 0; transform: translateX(24px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+.animate-fadeinup { animation: fadeInUp 0.35s ease both; }
+.animate-slidein { animation: slideIn 0.3s ease both; }
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-fadeinup, .animate-slidein { animation: none; }
+}
