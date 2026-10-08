@@ -21,7 +21,7 @@ Ouvrir `http://127.0.0.1:8000` (pas `localhost` : `php artisan serve` n'écoute 
   - `Auth/` (Connexion, Inscription)
   - `Client/` (Accueil, EspaceFiche, Reserver, Paiement, Confirmation, MesReservations, ReservationDetail)
   - `Gerant/` (TableauDeBord, Espaces, EspaceGestion, Reservations, Demandes)
-  - `Admin/` (TableauDeBord, Validations, Litiges, Parametres)
+  - `Admin/` (TableauDeBord, Validations, Gerants = coordonnées de versement et reversements, Litiges, Parametres)
   - `Notifications`, `Profil` (communs) ; `Profil/` (Compte = photo, infos, changement de numéro vérifié par SMS, compte de versement Mobile Money du gérant ; Securite = mot de passe, déconnexion des autres appareils, suppression du compte ; Preferences = SMS/rappels ; Aide = FAQ par rôle + contact + signalement → `Litige` ; Favoris (client) ; Revenus (gérant, 12 mois))
   - `Auth/MotDePasseOublie` — réinitialisation par code SMS
   - `Messages/` (Boite = boîte de réception, Fil = discussion, rafraîchie toutes les 10 s) — messagerie client ↔ gérant, ouverte depuis une réservation (`/messages/reservation/{id}`) ; rôles client et gérant uniquement
@@ -46,6 +46,7 @@ Les composants Livewire et les contrôleurs d'API délèguent aux mêmes service
 - `DemandeService` — demandes client d'annulation/report validées par le gérant.
 - `NotificationService` + `Sms/` — fil in-app + SMS (`log` en dev). Respecte les préférences de l'utilisateur (`users.notif_sms`, `users.notif_rappels`) : passer par `notifier()`, ne jamais appeler la passerelle SMS directement pour un utilisateur ayant un compte.
 - `StatistiquesService` — tableaux de bord gérant et admin.
+- `ReversementService` — part des acomptes due aux gérants (réservations en ligne **terminées**, hors réservations manuelles) ; l'admin enregistre le virement Mobile Money fait hors application (table `reversements`, `reservations.reversement_id`).
 - `PhotoEspaceService` / `ImageConversionService` — photos converties en WebP.
 - `InscriptionService`, `GeoService` (Nominatim/OSRM).
 - `CodeVerificationService` — codes SMS à 6 chiffres (hachés, 10 min, 5 essais, 3 envois/h par numéro) ; partent même si l'utilisateur a coupé les SMS.

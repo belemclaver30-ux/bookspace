@@ -72,4 +72,15 @@ class Gerant extends Model
     {
         return $this->hasMany(Reservation::class);
     }
+
+    public function reversements(): HasMany
+    {
+        return $this->hasMany(Reversement::class);
+    }
+
+    /** Coordonnées Mobile Money complètes : un reversement est possible. */
+    public function peutRecevoirVersement(): bool
+    {
+        return isset(self::OPERATEURS[$this->momo_operateur]) && filled($this->momo_numero);
+    }
 }

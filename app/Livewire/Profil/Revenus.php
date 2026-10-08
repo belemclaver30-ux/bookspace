@@ -4,6 +4,7 @@ namespace App\Livewire\Profil;
 
 use App\Models\Gerant;
 use App\Models\Reservation;
+use App\Services\ReversementService;
 use Carbon\CarbonImmutable;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Title;
@@ -23,7 +24,7 @@ class Revenus extends Component
 {
     private const MOIS = 12;
 
-    public function render()
+    public function render(ReversementService $reversements)
     {
         $gerant = auth()->user()->gerant()->firstOrFail();
         $debut = CarbonImmutable::now()->startOfMonth()->subMonths(self::MOIS - 1);
@@ -51,6 +52,10 @@ class Revenus extends Component
                 'sur_place' => array_sum(array_column($mois, 'sur_place')),
             ],
             'operateur' => Gerant::OPERATEURS[$gerant->momo_operateur] ?? null,
+            // Suivi des versements réellement effectués par BookSpace.
+            'recu' => (float) $gerant->reversements()->sum('montant'),
+            'enAttente' => (float) $reversements->aReverser($gerant)->sum('montant_reverse_gerant'),
+            'versements' => $gerant->reversements()->latest()->limit(10)->get(),
         ]);
     }
 
@@ -64,7 +69,7 @@ class Revenus extends Component
             'chiffre_affaires' => (float) $reservations->sum('prix_total'),
             'acomptes' => (float) $enLigne->sum('montant_acompte'),
             'commission' => (float) $enLigne->sum('montant_commission'),
-            // Part des acomptes en ligne reversée par BookSpace.
+            // Part des acomptes en ligne due par BookSpace (reversée après le créneau).
             'verse' => (float) $enLigne->sum('montant_reverse_gerant'),
             // Soldes des réservations en ligne + réservations manuelles.
             'sur_place' => (float) $reservations->sum('prix_total') - (float) $enLigne->sum('montant_acompte'),

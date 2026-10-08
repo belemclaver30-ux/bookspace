@@ -185,6 +185,23 @@ class NotificationService
         );
     }
 
+    /** BookSpace a versé au gérant sa part des acomptes (SMS + fil in-app). */
+    public function reversementEffectue(\App\Models\Reversement $reversement): void
+    {
+        $reversement->loadMissing('gerant.user');
+        $operateur = \App\Models\Gerant::OPERATEURS[$reversement->momo_operateur] ?? $reversement->momo_operateur;
+
+        $this->notifier(
+            $reversement->gerant->user,
+            'reversement_effectue',
+            'Versement effectué',
+            'BookSpace vous a versé ' . fcfa($reversement->montant) . " sur {$operateur} ({$reversement->momo_numero}) "
+            . "pour {$reversement->nb_reservations} réservation(s). Référence : {$reversement->reference_operateur}.",
+            ['reversement_id' => $reversement->id],
+            'sms',
+        );
+    }
+
     /** L'administrateur a pris en charge ou clos un signalement : son auteur est prévenu. */
     public function litigeTraite(\App\Models\Litige $litige): void
     {

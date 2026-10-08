@@ -1,6 +1,8 @@
 <div>
-    <a href="/gerant/espaces" class="text-[13px] font-semibold text-brand">← Mes espaces</a>
-    <h1 class="titre-page mt-2">{{ $espace->nom }}</h1>
+    <div class="flex items-center gap-3">
+        <x-retour href="/gerant/espaces" />
+        <h1 class="titre-page min-w-0 truncate">{{ $espace->nom }}</h1>
+    </div>
     <div class="mb-5 mt-1.5 flex flex-wrap items-center gap-x-2 gap-y-1 text-[13px] text-slate-500">
         {{ libelle_type($espace->type) }} · {{ $espace->adresse }}, {{ $espace->ville }}
         <x-badge-statut :statut="$espace->statut" />
@@ -10,6 +12,69 @@
     @endif
 
     <div class="grid grid-cols-[repeat(auto-fit,minmax(min(100%,320px),1fr))] items-start gap-4">
+
+        {{-- ── Fiche ── --}}
+        <section class="rounded-2xl bg-white p-4 shadow-carte-lg">
+            <h2 class="titre-section mb-1">Fiche de l'espace</h2>
+            <p class="mb-3 text-xs text-slate-400">Ce que voient les clients. Le type ({{ libelle_type($espace->type) }}) ne peut pas être changé.</p>
+
+            <form wire:submit="enregistrerFiche">
+                <x-erreur :message="collect(['nom', 'ville', 'tarif_horaire', 'capacite', 'type_pelouse', 'dimensions', 'equipements', 'description'])
+                    ->map(fn ($champ) => $errors->first($champ))->filter()->first()" />
+
+                <label class="mb-3 block">
+                    <span class="etiquette">NOM</span>
+                    <input type="text" wire:model="nom" class="champ" required maxlength="255">
+                </label>
+                <label class="mb-3 block">
+                    <span class="etiquette">VILLE</span>
+                    <input type="text" wire:model="ville" class="champ" required maxlength="255">
+                </label>
+                <label class="mb-3 block">
+                    <span class="etiquette">TARIF HORAIRE (FCFA)</span>
+                    <input type="number" wire:model="tarif_horaire" class="champ" required min="0" step="any" inputmode="numeric">
+                </label>
+
+                @if ($espace->type === 'salle_repetition')
+                    <label class="mb-3 block">
+                        <span class="etiquette">CAPACITÉ (personnes)</span>
+                        <input type="number" wire:model="capacite" class="champ" min="1" step="1" inputmode="numeric">
+                    </label>
+                    <label class="mb-3 flex items-center gap-2 text-[14px] text-slate-700">
+                        <input type="checkbox" wire:model="isolation_phonique" class="accent-brand"> Salle insonorisée
+                    </label>
+                @else
+                    <label class="mb-3 block">
+                        <span class="etiquette">TYPE DE PELOUSE</span>
+                        <input type="text" wire:model="type_pelouse" class="champ" maxlength="100" placeholder="Synthétique, naturelle…">
+                    </label>
+                    <label class="mb-3 block">
+                        <span class="etiquette">DIMENSIONS</span>
+                        <input type="text" wire:model="dimensions" class="champ" maxlength="50" placeholder="Ex. 40 × 20 m">
+                    </label>
+                    <label class="mb-3 flex items-center gap-2 text-[14px] text-slate-700">
+                        <input type="checkbox" wire:model="eclairage" class="accent-brand"> Éclairage pour jouer de nuit
+                    </label>
+                @endif
+
+                <label class="mb-3 block">
+                    <span class="etiquette">ÉQUIPEMENTS (séparés par des virgules)</span>
+                    <input type="text" wire:model="equipements" class="champ" maxlength="1000" placeholder="WiFi, Climatisation, Parking">
+                </label>
+                <label class="mb-3 block">
+                    <span class="etiquette">DESCRIPTION</span>
+                    <textarea wire:model="description" rows="4" class="champ resize-y" maxlength="5000"></textarea>
+                </label>
+
+                <button type="submit" class="btn-primaire" wire:loading.attr="disabled" wire:target="enregistrerFiche">
+                    <span wire:loading.remove wire:target="enregistrerFiche">Enregistrer la fiche</span>
+                    <span wire:loading wire:target="enregistrerFiche">Enregistrement…</span>
+                </button>
+            </form>
+            @if (session('fiche'))
+                <div class="mt-2 text-[13px] font-semibold text-green-600" role="status">✓ {{ session('fiche') }}</div>
+            @endif
+        </section>
 
         {{-- ── Photos ── --}}
         <section class="rounded-2xl bg-white p-4 shadow-carte-lg">

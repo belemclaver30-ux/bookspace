@@ -255,4 +255,51 @@ class EspaceGerantTest extends TestCase
             'nouvelle_duree_heures' => $type === 'report' ? 2 : null,
         ]);
     }
+
+    public function test_le_gerant_modifie_la_fiche_de_son_espace(): void
+    {
+        $espace = Espace::factory()->create([
+            'gerant_id' => $this->gerant->id, 'type' => 'terrain_foot', 'nom' => 'Terrain A', 'tarif_horaire' => 10000,
+        ]);
+
+        Livewire::test(EspaceGestion::class, ['espace' => $espace])
+            ->assertSet('nom', 'Terrain A')
+            ->set('nom', '  Terrain Élite ')
+            ->set('tarif_horaire', '15000')
+            ->set('equipements', 'Vestiaires, Douches, Vestiaires')
+            ->set('type_pelouse', 'Synthétique')
+            ->set('eclairage', true)
+            ->set('capacite', '30') // champ de salle : ignoré pour un terrain
+            ->call('enregistrerFiche')
+            ->assertHasNoErrors()
+            ->assertSee('Fiche enregistrée');
+
+        $espace->refresh();
+        $this->assertSame('Terrain Élite', $espace->nom);
+        $this->assertEquals(15000, $espace->tarif_horaire);
+        $this->assertSame(['Vestiaires', 'Douches'], $espace->equipements);
+        $this->assertSame('Synthétique', $espace->type_pelouse);
+        $this->assertTrue($espace->eclairage);
+        $this->assertNull($espace->capacite);
+        $this->assertSame('terrain_foot', $espace->type);
+        $this->assertDatabaseHas('audit_events', ['sujet_id' => $espace->id, 'action' => 'modifiee']);
+    }
+
+    public function test_la_fiche_est_validee(): void
+    {
+        $espace = Espace::factory()->create(['gerant_id' => $this->gerant->id]);
+
+        Livewire::test(EspaceGestion::class, ['espace' => $espace])
+            ->set('nom', '')
+            ->set('tarif_horaire', '-5')
+            ->call('enregistrerFiche')
+            ->assertHasErrors(['nom', 'tarif_horaire']);
+    }
+
+    public function test_un_gerant_ne_modifie_pas_l_espace_d_un_autre(): void
+    {
+        $autre = Espace::factory()->create();
+
+        Livewire::test(EspaceGestion::class, ['espace' => $autre])->assertForbidden();
+    }
 }

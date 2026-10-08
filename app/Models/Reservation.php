@@ -22,7 +22,7 @@ class Reservation extends Model
         'reference', 'client_id', 'client_nom', 'client_telephone', 'origine', 'espace_id', 'gerant_id',
         'date_debut', 'date_fin', 'duree_heures',
         'prix_total', 'taux_acompte', 'montant_acompte',
-        'taux_commission', 'montant_commission', 'montant_reverse_gerant',
+        'taux_commission', 'montant_commission', 'montant_reverse_gerant', 'reversement_id',
         'statut', 'annulee_par', 'motif_annulation',
         'confirmee_at', 'annulee_at', 'rappel_envoye_at',
     ];
@@ -71,6 +71,11 @@ class Reservation extends Model
     public function gerant(): BelongsTo
     {
         return $this->belongsTo(Gerant::class);
+    }
+
+    public function reversement(): BelongsTo
+    {
+        return $this->belongsTo(Reversement::class);
     }
 
     public function paiements(): HasMany

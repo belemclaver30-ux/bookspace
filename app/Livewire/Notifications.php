@@ -73,6 +73,7 @@ class Notifications extends Component
         return match (true) {
             $n->type === 'litige_traite' => ['Voir mon signalement', '/profil/aide#signalement'],
             $n->type === 'demande_modification' => ['Traiter la demande', '/gerant/demandes'],
+            $n->type === 'reversement_effectue' => ['Voir mes revenus', '/profil/revenus'],
             $reservationId && $user->estClient() => ['Voir la réservation', "/reservations/{$reservationId}"],
             $reservationId && $user->estGerant() => ['Voir mes réservations', '/gerant/reservations'],
             default => null,

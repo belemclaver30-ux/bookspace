@@ -42,8 +42,8 @@ chaque modification de vue, de CSS ou de JS.
 |------|-------|
 | Visiteur | `/` (accueil), `/connexion`, `/inscription` |
 | Client | `/app` (recherche, « près de moi »), `/espaces/{id}` (fiche, carte, itinéraire), `/espaces/{id}/reserver`, `/reservations`, `/reservations/{id}` (annulation, demande de report, avis), `/reservations/{id}/paiement`, `/reservations/{id}/confirmation` |
-| Gérant | `/gerant` (statistiques), `/gerant/espaces`, `/gerant/espaces/{id}` (photos, localisation, horaires, blocages), `/gerant/reservations` (calendrier, report, annulation, ajout manuel), `/gerant/demandes` |
-| Admin | `/admin` (supervision), `/admin/validations` (gérants, espaces, suspension), `/admin/litiges`, `/admin/parametres` |
+| Gérant | `/gerant` (statistiques), `/gerant/espaces`, `/gerant/espaces/{id}` (fiche, photos, localisation, horaires, blocages), `/gerant/reservations` (calendrier, report, annulation, ajout manuel), `/gerant/demandes` |
+| Admin | `/admin` (supervision), `/admin/validations` (gérants, espaces, suspension), `/admin/gerants` (coordonnées de versement, reversements), `/admin/litiges`, `/admin/parametres` |
 | Tous | `/notifications`, `/profil` |
 
 Chaque écran est un composant Livewire (`app/Livewire/`, vues dans
@@ -56,7 +56,7 @@ classique, par numéro de téléphone.
 terrain_foot, héritage single-table) · `espace_photos` · `espace_disponibilites`
 (horaires hebdo) · `espace_blocages` · `reservations` · `paiements` (Mobile
 Money) · `evaluations` · `demandes_modification` · `app_notifications` ·
-`litiges` · `parametres` (commission, acompte…) · `audit_events`
+`litiges` · `reversements` · `parametres` (commission, acompte…) · `audit_events`
 (historisation append-only, TDR §10.2).
 
 ## API JSON
@@ -104,6 +104,46 @@ Définies dans `routes/console.php` ; en prod : `* * * * * php artisan schedule:
 - `reservations:cloturer` (15 min) : passe les réservations confirmées à
   `terminee` une fois le créneau écoulé, ce qui débloque l'évaluation.
 - `reservations:rappeler` (5 min) : rappel SMS client + gérant avant le créneau.
+
+## Reversements aux gérants
+
+BookSpace encaisse les acomptes en ligne ; la part du gérant (acompte −
+commission) lui est due une fois le créneau **terminé**. L'administrateur fait
+le virement Mobile Money hors application, puis l'enregistre dans
+`/admin/gerants` avec la référence de la transaction : les réservations
+concernées sont marquées reversées et le gérant reçoit un SMS. Le gérant suit
+« Reçu » / « En attente de versement » dans Profil > Mes revenus.
+Les réservations ajoutées à la main par le gérant sont encaissées sur place.
+
+## Mise en production
+
+1. `.env` : `APP_ENV=production`, `APP_DEBUG=false`, `APP_URL=https://…`,
+   `SESSION_SECURE_COOKIE=true`, base de données, `MOMO_DRIVER=yenga` +
+   `YENGA_*`, `SMS_DRIVER=africastalking` + `AT_*`, `SUPPORT_*`.
+2. Déploiement :
+   ```bash
+   composer install --no-dev --optimize-autoloader
+   npm ci && npm run build
+   php artisan migrate --force
+   php artisan storage:link
+   php artisan optimize        # caches config, routes, vues
+   ```
+3. Cron (obligatoire : expiration, clôture et rappels des réservations) :
+   `* * * * * cd /chemin/du/projet && php artisan schedule:run >> /dev/null 2>&1`
+4. Webhook Yenga : déclarer `https://<domaine>/api/paiements/callback/yenga`
+   et l'URL de retour `https://<domaine>/reservations` dans le tableau de bord
+   Yenga. Le site doit être en HTTPS.
+5. Photos : `PHOTOS_DISK=public` suffit sur un serveur unique ; pour S3,
+   `composer require league/flysystem-aws-s3-v3 "^3.0"`, renseigner `AWS_*`
+   et `PHOTOS_DISK=s3`.
+6. Derrière un proxy/répartiteur HTTPS (Cloudflare, Nginx d'hébergeur…),
+   déclarer le proxy de confiance dans `bootstrap/app.php`
+   (`$middleware->trustProxies(at: …)`) pour que les URL générées soient en https.
+7. Avant l'ouverture au public : faire valider par un juriste les conditions
+   d'utilisation et la politique de confidentialité (`resources/views/legal/`)
+   et fixer la politique de remboursement des acomptes.
+
+Aucune tâche n'est mise en file d'attente : pas de worker `queue:work` à lancer.
 
 ## Tests
 

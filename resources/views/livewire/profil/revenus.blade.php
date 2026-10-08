@@ -2,7 +2,7 @@
     $moisNoms = ['Janvier', 'Février', 'Mars', 'Avril', 'Mai', 'Juin', 'Juillet', 'Août', 'Septembre', 'Octobre', 'Novembre', 'Décembre'];
     $tuiles = [
         ["Chiffre d'affaires", fcfa($total['chiffre_affaires']), true],
-        ['Versé par BookSpace', fcfa($total['verse']), false],
+        ['Votre part des acomptes', fcfa($total['verse']), false],
         ['Encaissé sur place', fcfa($total['sur_place']), false],
         ['Commission plateforme', fcfa($total['commission']), false],
     ];
@@ -31,6 +31,27 @@
         <a href="/profil/compte" class="text-[13px] font-semibold text-brand">{{ $operateur ? 'Modifier' : 'Renseigner' }}</a>
     </div>
 
+    <div class="mb-4 rounded-[14px] bg-white p-4 shadow-carte">
+        <div class="mb-3 flex flex-wrap gap-x-8 gap-y-2">
+            <div>
+                <div class="text-[11px] text-slate-400">Reçu de BookSpace</div>
+                <div class="text-lg font-extrabold text-slate-900">{{ fcfa($recu) }}</div>
+            </div>
+            <div>
+                <div class="text-[11px] text-slate-400">En attente de versement</div>
+                <div class="text-lg font-extrabold text-brand">{{ fcfa($enAttente) }}</div>
+            </div>
+        </div>
+        @forelse ($versements as $v)
+            <div wire:key="versement-{{ $v->id }}" class="flex flex-wrap justify-between gap-2 border-t border-slate-100 py-2 text-[13px]">
+                <span class="text-slate-600">{{ date_longue($v->created_at) }} · {{ $v->nb_reservations }} réservation{{ $v->nb_reservations > 1 ? 's' : '' }} · réf. {{ $v->reference_operateur }}</span>
+                <b class="text-slate-800">{{ fcfa($v->montant) }}</b>
+            </div>
+        @empty
+            <div class="border-t border-slate-100 pt-2 text-[13px] text-slate-400">Aucun versement reçu pour l'instant.</div>
+        @endforelse
+    </div>
+
     <div class="overflow-hidden rounded-[14px] bg-white shadow-carte">
         <div class="overflow-x-auto">
             <table class="w-full min-w-[620px] text-left text-[13px]">
@@ -41,7 +62,7 @@
                         <th scope="col" class="px-4 py-2.5 text-right font-bold">Chiffre d'affaires</th>
                         <th scope="col" class="px-4 py-2.5 text-right font-bold">Acomptes en ligne</th>
                         <th scope="col" class="px-4 py-2.5 text-right font-bold">Commission</th>
-                        <th scope="col" class="px-4 py-2.5 text-right font-bold">Versé par BookSpace</th>
+                        <th scope="col" class="px-4 py-2.5 text-right font-bold">Votre part</th>
                     </tr>
                 </thead>
                 <tbody class="divide-y divide-slate-100">
@@ -60,7 +81,8 @@
         </div>
     </div>
     <p class="mt-3 text-xs leading-normal text-slate-500">
-        « Versé par BookSpace » = acomptes payés en ligne moins la commission. Le solde de chaque réservation, et la totalité
-        des réservations ajoutées manuellement, sont encaissés directement sur place.
+        « Votre part » = acomptes payés en ligne moins la commission. BookSpace vous la verse sur votre compte Mobile Money
+        une fois le créneau passé. Le solde de chaque réservation, et la totalité des réservations ajoutées manuellement,
+        sont encaissés directement sur place.
     </p>
 </div>

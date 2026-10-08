@@ -98,6 +98,7 @@ Route::middleware('auth')->group(function () {
     Route::middleware('role:admin')->prefix('admin')->name('admin.')->group(function () {
         Route::get('/', Admin\TableauDeBord::class)->name('tableau');
         Route::get('validations', Admin\Validations::class)->name('validations');
+        Route::get('gerants', Admin\Gerants::class)->name('gerants');
         Route::get('litiges', Admin\Litiges::class)->name('litiges');
         Route::get('parametres', Admin\Parametres::class)->name('parametres');
     });

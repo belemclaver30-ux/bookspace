@@ -13,6 +13,7 @@
         $liens = [
             ['/admin', 'tableau', 'Tableau de bord', request()->is('admin'), 0],
             ['/admin/validations', 'valider', 'Validations', request()->is('admin/validations'), 0],
+            ['/admin/gerants', 'revenus', 'Gérants', request()->is('admin/gerants'), 0],
             ['/admin/litiges', 'alerte', 'Litiges', request()->is('admin/litiges'), 0],
             ['/admin/parametres', 'curseurs', 'Paramètres', request()->is('admin/parametres'), 0],
             ['/profil', 'utilisateur', 'Profil', request()->is('profil*'), 0],
