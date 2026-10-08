@@ -11,6 +11,11 @@ return [
     // (commande `reservations:expirer`, planifiée toutes les 5 min).
     'reservation_expiration_minutes' => env('RESERVATION_EXPIRE_MINUTES', 30),
 
+    // Paiement lancé mais jamais abouti (client parti de la page Mobile Money) :
+    // délai supplémentaire, compté depuis le lancement du paiement, avant
+    // d'expirer quand même la réservation — sinon le créneau resterait bloqué.
+    'paiement_expiration_minutes' => env('PAIEMENT_EXPIRE_MINUTES', 60),
+
     // Délai avant le créneau auquel le rappel SMS (client + gérant) est envoyé.
     'rappel_minutes_avant' => env('RESERVATION_RAPPEL_MINUTES', 30),
 

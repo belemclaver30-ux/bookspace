@@ -58,7 +58,8 @@ class PaiementController extends Controller
     /**
      * Webhook passerelle Mobile Money. Non protégé par Sanctum (appelé par
      * l'opérateur) mais authentifié par signature HMAC-SHA256 du corps brut
-     * dès qu'un secret est configuré (`bookspace.mobile_money.webhook_secret`).
+     * (`bookspace.mobile_money.webhook_secret`). Sans secret, il n'est accepté
+     * qu'en développement avec le driver `fake` (voir `secretWebhook()`).
      */
     public function callback(Request $request)
     {
@@ -79,15 +80,15 @@ class PaiementController extends Controller
     }
 
     /**
-     * Rejette le webhook si un secret est configuré et que la signature
-     * `X-Signature` ne correspond pas au HMAC-SHA256 du corps brut.
+     * Rejette le webhook si la signature `X-Signature` ne correspond pas au
+     * HMAC-SHA256 du corps brut.
      */
     private function verifierSignature(Request $request): void
     {
-        $secret = config('bookspace.mobile_money.webhook_secret');
+        $secret = $this->secretWebhook('bookspace.mobile_money.webhook_secret');
 
-        if (! $secret) {
-            return; // Dev / driver `fake` : pas de secret, vérification désactivée.
+        if ($secret === null) {
+            return;
         }
 
         $attendu = hash_hmac('sha256', $request->getContent(), $secret);
@@ -131,10 +132,10 @@ class PaiementController extends Controller
 
     private function verifierSignatureYenga(Request $request): void
     {
-        $secret = config('bookspace.mobile_money.yenga.webhook_secret');
+        $secret = $this->secretWebhook('bookspace.mobile_money.yenga.webhook_secret');
 
-        if (! $secret) {
-            return; // Dev / driver `fake` : pas de secret, vérification désactivée.
+        if ($secret === null) {
+            return;
         }
 
         $attendu = hash_hmac('sha256', $request->getContent(), $secret);
@@ -145,5 +146,28 @@ class PaiementController extends Controller
             401,
             'Signature du webhook Yenga invalide.',
         );
+    }
+
+    /**
+     * Secret de signature d'un webhook. Sans secret, la vérification n'est
+     * sautée (null) qu'en développement avec le driver `fake` : autrement,
+     * n'importe qui pourrait confirmer une réservation sans payer en postant
+     * sa référence. On refuse donc le webhook tant qu'il n'est pas configuré.
+     */
+    private function secretWebhook(string $cle): ?string
+    {
+        $secret = (string) config($cle);
+
+        if ($secret !== '') {
+            return $secret;
+        }
+
+        abort_unless(
+            config('bookspace.mobile_money.driver') === 'fake' && ! app()->isProduction(),
+            503,
+            'Webhook de paiement non configuré.',
+        );
+
+        return null;
     }
 }

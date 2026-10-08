@@ -4,11 +4,10 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Models\User;
+use App\Services\ConnexionService;
 use App\Services\InscriptionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Hash;
-use Illuminate\Validation\ValidationException;
 
 /**
  * Inscription / connexion par numéro de téléphone (TDR §5.1).
@@ -24,28 +23,14 @@ class AuthController extends Controller
         return $this->reponseAvecToken($user, 201);
     }
 
-    public function login(Request $request): JsonResponse
+    public function login(Request $request, ConnexionService $connexions): JsonResponse
     {
         $data = $request->validate([
             'telephone' => ['required', 'string'],
             'password' => ['required', 'string'],
         ]);
 
-        $user = User::where('telephone', $data['telephone'])->first();
-
-        if (! $user || ! Hash::check($data['password'], $user->password)) {
-            throw ValidationException::withMessages([
-                'telephone' => 'Numéro ou mot de passe incorrect.',
-            ]);
-        }
-
-        if (! $user->actif) {
-            throw ValidationException::withMessages(['telephone' => 'Compte désactivé.']);
-        }
-
-        $user->forceFill(['derniere_connexion_at' => now()])->save();
-
-        return $this->reponseAvecToken($user);
+        return $this->reponseAvecToken($connexions->verifier($data['telephone'], $data['password'], $request->ip()));
     }
 
     public function me(Request $request): JsonResponse

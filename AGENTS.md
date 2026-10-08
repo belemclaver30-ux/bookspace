@@ -49,6 +49,7 @@ Les composants Livewire et les contrôleurs d'API délèguent aux mêmes service
 - `ReversementService` — part des acomptes due aux gérants (réservations en ligne **terminées**, hors réservations manuelles) ; l'admin enregistre le virement Mobile Money fait hors application (table `reversements`, `reservations.reversement_id`).
 - `PhotoEspaceService` / `ImageConversionService` — photos converties en WebP.
 - `InscriptionService`, `GeoService` (Nominatim/OSRM).
+- `ConnexionService` — vérification des identifiants pour le web et l'API, avec limites anti-force brute (par numéro+IP et par numéro).
 - `CodeVerificationService` — codes SMS à 6 chiffres (hachés, 10 min, 5 essais, 3 envois/h par numéro) ; partent même si l'utilisateur a coupé les SMS.
 - `MessagerieService` — une conversation par couple (client, gérant), possible seulement s'ils ont une réservation en commun ; compteur `nonLus()` des pastilles de navigation.
 - `CompteService` — « supprimer mon compte » = **anonymisation** (pas de `delete()` sur `users` : les clés étrangères effaceraient en cascade réservations, paiements et avis).
@@ -64,6 +65,8 @@ Tâches planifiées (`routes/console.php`) : `reservations:expirer`, `reservatio
 - Code et interface en français (noms de classes, méthodes, vues).
 - Interactivité : Livewire d'abord ; Alpine uniquement pour l'état purement visuel (onglets, tiroir, galerie) et les API navigateur (géolocalisation, Leaflet).
 - Middleware `AuthenticateSession` actif : changer le mot de passe d'un utilisateur ferme ses autres sessions (reconnecter la session courante avec `Auth::login()`).
+- Les propriétés publiques Livewire sont modifiables par le navigateur : les services revalident toute valeur métier (date, durée, montant…) ; ne jamais se fier à une valeur fixée côté composant.
+- Webhooks de paiement : la signature n'est sautée qu'avec `MOMO_DRIVER=fake` hors production (`PaiementController::secretWebhook`).
 - Toute action Livewire revérifie l'appartenance de la ressource (client propriétaire de la réservation, gérant propriétaire de l'espace). Le rôle est contrôlé par le middleware `role:` (rejoué sur les requêtes Livewire).
 - Pastilles « non lus » : `<x-pastille :nombre="…" compteur="notifications|messages">` ; un composant qui change ce nombre émet `$this->dispatch('compteur', type: …, nombre: …)` pour les mettre à jour sans recharger.
 - Bouton retour : toujours `<x-retour href="…">` — il revient à la page précédente de l'application (`resources/js/retour.js`) ; `href` n'est que la destination de secours (lien ouvert directement). Ne pas ouvrir de page interne dans un nouvel onglet (`target="_blank"`) : le retour n'y aurait pas d'historique. Un formulaire qu'on peut quitter pour lire une autre page garde sa saisie (`#[Session]`, ou `#[Url]` pour filtres et pagination).

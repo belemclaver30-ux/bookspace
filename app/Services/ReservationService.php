@@ -25,8 +25,14 @@ class ReservationService
         private readonly NotificationService $notifications,
     ) {}
 
+    /** Durée réservable (heures), quel que soit le point d'entrée (web, API). */
+    public const DUREE_MIN = 1;
+
+    public const DUREE_MAX = 12;
+
     public function creer(User $client, Espace $espace, CarbonImmutable $debut, float $dureeHeures): Reservation
     {
+        $this->verifierCreneau($espace, $debut, $dureeHeures);
         $fin = $debut->addMinutes((int) round($dureeHeures * 60));
 
         $tauxAcompte = (float) Parametre::valeur('deposit_rate', config('bookspace.deposit_rate'));
@@ -88,6 +94,7 @@ class ReservationService
         string $clientTelephone,
         User $acteur,
     ): Reservation {
+        $this->verifierCreneau($espace, $debut, $dureeHeures);
         $fin = $debut->addMinutes((int) round($dureeHeures * 60));
         $prixTotal = round((float) $espace->tarif_horaire * $dureeHeures, 2);
 
@@ -230,6 +237,28 @@ class ReservationService
         $this->notifications->reservationAnnulee($reservation);
 
         return $reservation;
+    }
+
+    /**
+     * Garde-fous indépendants de l'interface : un composant Livewire peut
+     * recevoir n'importe quelle valeur de ses propriétés publiques, on ne fait
+     * donc confiance ni à la date ni à la durée envoyées.
+     */
+    private function verifierCreneau(Espace $espace, CarbonImmutable $debut, float $dureeHeures): void
+    {
+        if ($espace->statut !== 'valide') {
+            throw ValidationException::withMessages(['date_debut' => "Cet espace n'est pas ouvert à la réservation."]);
+        }
+
+        if ($debut->isPast()) {
+            throw ValidationException::withMessages(['date_debut' => 'Le créneau doit être dans le futur.']);
+        }
+
+        if ($dureeHeures < self::DUREE_MIN || $dureeHeures > self::DUREE_MAX || fmod($dureeHeures * 2, 1.0) !== 0.0) {
+            throw ValidationException::withMessages([
+                'duree_heures' => 'Durée invalide (de ' . self::DUREE_MIN . ' à ' . self::DUREE_MAX . ' h, par demi-heure).',
+            ]);
+        }
     }
 
     private function genererReference(): string

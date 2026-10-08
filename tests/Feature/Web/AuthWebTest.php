@@ -56,6 +56,40 @@ class AuthWebTest extends TestCase
         $this->assertGuest();
     }
 
+    /** Force brute répartie sur plusieurs adresses IP : bloquée par numéro. */
+    public function test_force_brute_bloquee_par_numero(): void
+    {
+        User::factory()->client()->create(['telephone' => '+22670000001']);
+
+        for ($i = 1; $i <= 20; $i++) {
+            $this->withServerVariables(['REMOTE_ADDR' => "10.0.0.{$i}"])
+                ->postJson('/api/auth/login', ['telephone' => '+22670000001', 'password' => "essai{$i}"])
+                ->assertStatus(422);
+        }
+
+        // Même avec le bon mot de passe et une nouvelle adresse : refusé.
+        $this->withServerVariables(['REMOTE_ADDR' => '10.0.1.1'])
+            ->postJson('/api/auth/login', ['telephone' => '+22670000001', 'password' => 'password'])
+            ->assertStatus(422)
+            ->assertJsonPath('errors.telephone.0', fn ($m) => str_starts_with($m, 'Trop de tentatives'));
+    }
+
+    public function test_api_login_limite_par_adresse_ip(): void
+    {
+        for ($i = 0; $i < 10; $i++) {
+            $this->postJson('/api/auth/login', ['telephone' => "+2267000{$i}999", 'password' => 'x']);
+        }
+
+        $this->postJson('/api/auth/login', ['telephone' => '+22670009999', 'password' => 'x'])->assertStatus(429);
+    }
+
+    public function test_entetes_de_securite(): void
+    {
+        $this->get('/connexion')
+            ->assertHeader('X-Frame-Options', 'SAMEORIGIN')
+            ->assertHeader('X-Content-Type-Options', 'nosniff');
+    }
+
     public function test_compte_desactive_refuse(): void
     {
         User::factory()->client()->create(['telephone' => '+22670000001', 'actif' => false]);

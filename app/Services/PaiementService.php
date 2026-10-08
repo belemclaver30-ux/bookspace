@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Litige;
 use App\Models\Paiement;
 use App\Models\Reservation;
 use App\Services\MobileMoney\PasserelleManager;
@@ -96,7 +97,22 @@ class PaiementService
         $paiement->journaliser($succes ? 'paiement_valide' : 'paiement_echoue');
 
         if ($succes) {
-            $this->reservations->confirmer($paiement->reservation);
+            $reservation = $this->reservations->confirmer($paiement->reservation);
+
+            // Argent reçu pour une réservation déjà expirée ou annulée : le
+            // créneau a pu être repris, on ne la réactive pas. Un litige est
+            // ouvert pour que l'administrateur rembourse le client.
+            if ($reservation->statut === 'annulee' && $reservation->client_id) {
+                Litige::create([
+                    'reservation_id' => $reservation->id,
+                    'ouvert_par' => $reservation->client_id,
+                    'sujet' => "Acompte reçu après l'annulation de {$reservation->reference}",
+                    'description' => 'Paiement de ' . fcfa($paiement->montant) . " confirmé par l'opérateur "
+                        . "(référence {$paiement->reference_operateur}) alors que la réservation était déjà annulée. "
+                        . 'À rembourser au client. — Signalement automatique.',
+                ]);
+                $paiement->journaliser('paiement_apres_annulation');
+            }
         }
 
         return $paiement;

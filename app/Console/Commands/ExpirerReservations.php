@@ -23,12 +23,18 @@ class ExpirerReservations extends Command
     {
         $delai = (int) config('bookspace.reservation_expiration_minutes', 30);
         $limite = now()->subMinutes($delai);
+        // Un paiement lancé obtient un sursis, mais pas indéfini : sinon il
+        // suffirait d'ouvrir la page de paiement sans payer pour bloquer un créneau.
+        $limitePaiement = now()->subMinutes((int) config('bookspace.paiement_expiration_minutes', 60));
 
         $expirees = Reservation::where('statut', 'en_attente')
             ->where('created_at', '<', $limite)
-            ->whereDoesntHave('paiements', fn ($q) => $q->whereIn('statut', ['en_cours', 'valide']))
+            ->whereDoesntHave('paiements', fn ($q) => $q->where('statut', 'valide'))
+            ->whereDoesntHave('paiements', fn ($q) => $q->where('statut', 'en_cours')->where('created_at', '>=', $limitePaiement))
             ->get()
             ->each(function (Reservation $reservation) use ($notifications) {
+                // Un éventuel webhook tardif sera traité par PaiementService::confirmerCallback.
+                $reservation->paiements()->where('statut', 'en_cours')->update(['statut' => 'echoue']);
                 $reservation->update([
                     'statut' => 'annulee',
                     'motif_annulation' => "Acompte non réglé dans le délai imparti — réservation expirée.",

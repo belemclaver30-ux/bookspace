@@ -49,6 +49,39 @@ class PaiementWebhookTest extends TestCase
         $this->assertSame('valide', $paiement->fresh()->statut);
     }
 
+    /** Sans secret avec une vraie passerelle : refus (sinon on confirmerait sans paiement). */
+    public function test_callback_refuse_sans_secret_avec_une_vraie_passerelle(): void
+    {
+        config([
+            'bookspace.mobile_money.driver' => 'yenga',
+            'bookspace.mobile_money.webhook_secret' => null,
+            'bookspace.mobile_money.yenga.webhook_secret' => null,
+        ]);
+
+        $espace = Espace::factory()->create();
+        $resa = Reservation::factory()->for($espace)->create(['gerant_id' => $espace->gerant_id, 'statut' => 'en_attente']);
+        $resa->paiements()->create([
+            'montant' => $resa->montant_acompte, 'mode' => 'orange_money', 'telephone' => '+22670000000',
+            'reference_operateur' => $resa->reference, 'statut' => 'en_cours',
+        ]);
+
+        $this->postJson('/api/paiements/callback', ['reference_operateur' => $resa->reference, 'statut' => 'valide'])
+            ->assertStatus(503);
+        $this->postJson('/api/paiements/callback/yenga', ['reference' => $resa->reference, 'paymentStatus' => 'DONE'])
+            ->assertStatus(503);
+
+        $this->assertSame('en_attente', $resa->fresh()->statut);
+    }
+
+    public function test_callback_refuse_sans_secret_en_production(): void
+    {
+        config(['bookspace.mobile_money.webhook_secret' => null]);
+        $this->app['env'] = 'production';
+
+        $this->postJson('/api/paiements/callback', ['reference_operateur' => 'x', 'statut' => 'valide'])
+            ->assertStatus(503);
+    }
+
     public function test_callback_reste_ouvert_sans_secret_en_dev(): void
     {
         config(['bookspace.mobile_money.webhook_secret' => null]);

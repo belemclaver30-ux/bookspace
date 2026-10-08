@@ -132,7 +132,9 @@ Les réservations ajoutées à la main par le gérant sont encaissées sur place
    `* * * * * cd /chemin/du/projet && php artisan schedule:run >> /dev/null 2>&1`
 4. Webhook Yenga : déclarer `https://<domaine>/api/paiements/callback/yenga`
    et l'URL de retour `https://<domaine>/reservations` dans le tableau de bord
-   Yenga. Le site doit être en HTTPS.
+   Yenga, et copier son secret de webhook dans `YENGA_WEBHOOK_SECRET`.
+   **Sans secret, les webhooks sont refusés** (sinon n'importe qui pourrait
+   confirmer une réservation sans payer). Le site doit être en HTTPS.
 5. Photos : `PHOTOS_DISK=public` suffit sur un serveur unique ; pour S3,
    `composer require league/flysystem-aws-s3-v3 "^3.0"`, renseigner `AWS_*`
    et `PHOTOS_DISK=s3`.
@@ -166,3 +168,10 @@ n'appellent jamais la passerelle de paiement ni l'envoi de SMS réels.
   demande validée par le gérant.
 - Chaque transition (création, paiement, confirmation, annulation, validation)
   est journalisée dans `audit_events`.
+- Webhooks de paiement signés (HMAC) et refusés sans secret hors développement.
+- Connexion limitée par numéro et adresse IP (5 échecs/min) et par numéro
+  (20 échecs/h) ; API limitée par adresse IP. En-têtes de sécurité sur toutes
+  les pages (`EntetesSecurite`).
+- Un paiement lancé mais abandonné libère le créneau après
+  `PAIEMENT_EXPIRE_MINUTES` ; un acompte reçu après l'annulation ouvre un
+  litige automatique pour remboursement.

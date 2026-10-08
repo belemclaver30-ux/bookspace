@@ -115,6 +115,26 @@ class ParcoursClientTest extends TestCase
         $this->assertDatabaseCount('reservations', 1);
     }
 
+    /** Les propriétés Livewire sont modifiables par le navigateur : le service revalide tout. */
+    public function test_une_reservation_forgee_est_refusee(): void
+    {
+        $espace = Espace::factory()->create();
+
+        Livewire::test(Reserver::class, ['espace' => $espace])
+            ->set('date', CarbonImmutable::yesterday()->toDateString())
+            ->set('creneau', '10:00')
+            ->call('reserver')
+            ->assertHasErrors('date_debut');
+
+        Livewire::test(Reserver::class, ['espace' => $espace])
+            ->set('duree', 500)
+            ->set('creneau', '10:00')
+            ->call('reserver')
+            ->assertHasErrors('duree_heures');
+
+        $this->assertDatabaseCount('reservations', 0);
+    }
+
     public function test_un_client_ne_voit_pas_la_reservation_d_un_autre(): void
     {
         $autre = Reservation::factory()->create();

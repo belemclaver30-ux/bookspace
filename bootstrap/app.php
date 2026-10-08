@@ -20,7 +20,10 @@ return Application::configure(basePath: dirname(__DIR__))
         // connecté sur une page « invité » -> accueil de son rôle.
         // Une session dont le mot de passe a changé depuis (autre appareil) est
         // fermée : « Se déconnecter des autres appareils », changement de mot de passe.
-        $middleware->web(append: [\Illuminate\Session\Middleware\AuthenticateSession::class]);
+        $middleware->web(append: [
+            \Illuminate\Session\Middleware\AuthenticateSession::class,
+            \App\Http\Middleware\EntetesSecurite::class,
+        ]);
 
         $middleware->redirectGuestsTo('/connexion');
         $middleware->redirectUsersTo(fn ($request) => $request->user()?->accueil() ?? '/app');

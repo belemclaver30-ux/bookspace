@@ -26,8 +26,9 @@ use Illuminate\Support\Facades\Route;
 */
 
 // ─── Public ──────────────────────────────────────────────────────────────────
-Route::post('auth/register', [AuthController::class, 'register']);
-Route::post('auth/login', [AuthController::class, 'login']);
+// Limités par adresse IP (force brute, création de comptes en masse).
+Route::post('auth/register', [AuthController::class, 'register'])->middleware('throttle:5,1');
+Route::post('auth/login', [AuthController::class, 'login'])->middleware('throttle:10,1');
 
 Route::get('parametres-publics', ConfigController::class);
 
@@ -45,10 +46,12 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::get('auth/me', [AuthController::class, 'me']);
     Route::post('auth/logout', [AuthController::class, 'logout']);
 
-    // Géolocalisation / itinéraires
-    Route::get('geo/recherche', [GeoController::class, 'rechercher']);
-    Route::get('geo/inverse', [GeoController::class, 'inverse']);
-    Route::get('geo/itineraire', [GeoController::class, 'itineraire']);
+    // Géolocalisation / itinéraires (services publics Nominatim / OSRM : quotas à respecter)
+    Route::middleware('throttle:30,1')->group(function () {
+        Route::get('geo/recherche', [GeoController::class, 'rechercher']);
+        Route::get('geo/inverse', [GeoController::class, 'inverse']);
+        Route::get('geo/itineraire', [GeoController::class, 'itineraire']);
+    });
 
     Route::get('notifications', [NotificationController::class, 'index']);
     Route::post('notifications/{notification}/lu', [NotificationController::class, 'marquerLu']);
