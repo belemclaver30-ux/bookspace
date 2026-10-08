@@ -1,13 +1,17 @@
 @echo off
-REM Lance BookSpace en local : API Laravel (port 8000) + front Vite (port 8443).
+REM Lance BookSpace en local (application Laravel + Livewire, un seul serveur).
 REM Prerequis : XAMPP MySQL demarre (base "bookspace").
 
-echo Demarrage de l'API Laravel sur http://127.0.0.1:8000 ...
-start "BookSpace API" cmd /k "cd /d %~dp0backend && php artisan serve --host=127.0.0.1 --port=8000"
+cd /d %~dp0
 
-echo Demarrage du front Vite sur http://127.0.0.1:8443 ...
-start "BookSpace Web" cmd /k "cd /d %~dp0 && set PORT=8443&& npm run dev"
+if not exist public\build\manifest.json (
+    echo Compilation des fichiers CSS/JS...
+    call npm run build
+)
+
+echo Demarrage de BookSpace sur http://127.0.0.1:8000 ...
+start "BookSpace" cmd /k "cd /d %~dp0 && php artisan serve --host=127.0.0.1 --port=8000"
 
 echo.
-echo Deux fenetres se sont ouvertes. Ouvrez ensuite http://127.0.0.1:8443
-echo Laissez-les ouvertes tant que vous utilisez l'application.
+echo Une fenetre s'est ouverte. Ouvrez ensuite http://127.0.0.1:8000
+echo Laissez-la ouverte tant que vous utilisez l'application.
