@@ -33,13 +33,14 @@ class VisiteGuideeTest extends TestCase
         $this->get('/reservations')->assertOk()->assertDontSeeLivewire(VisiteGuidee::class);
     }
 
+    /** Même si l'utilisateur quitte la page en pleine visite, elle ne revient pas. */
     public function test_la_visite_n_est_proposee_qu_une_fois(): void
     {
         $client = User::factory()->client()->nouveau()->create();
 
-        Livewire::actingAs($client)->test(VisiteGuidee::class)->call('terminer');
-
+        $this->actingAs($client)->get('/app')->assertSeeLivewire(VisiteGuidee::class);
         $this->assertNotNull($client->fresh()->visite_terminee_at);
+
         $this->actingAs($client->fresh())->get('/app')->assertDontSeeLivewire(VisiteGuidee::class);
     }
 

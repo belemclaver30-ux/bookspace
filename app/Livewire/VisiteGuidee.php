@@ -9,14 +9,24 @@ use Livewire\Component;
  * Visite guidée de l'interface, proposée une fois au nouvel utilisateur sur
  * la page d'accueil de son rôle (client : /app, gérant : /gerant). Chaque
  * étape met en lumière un élément marqué `data-visite="…"` ; le placement et
- * l'enchaînement sont gérés côté navigateur (resources/js/visite.js). Terminée
- * ou passée, elle n'est plus proposée (relançable depuis Profil > Aide).
+ * l'enchaînement sont gérés côté navigateur (resources/js/visite.js).
+ * Proposée une seule fois : marquée vue dès son affichage (relançable à la
+ * demande depuis Profil > Aide).
  */
 class VisiteGuidee extends Component
 {
-    public function terminer(): void
+    /**
+     * Comptée comme vue dès son affichage : elle n'est proposée qu'une seule
+     * fois, même si l'utilisateur quitte la page en cours de visite.
+     */
+    public function mount(): void
     {
         auth()->user()->forceFill(['visite_terminee_at' => now()])->save();
+    }
+
+    /** Fin ou « Passer » : rien à enregistrer de plus (déjà fait à l'affichage). */
+    public function terminer(): void
+    {
         $this->skipRender();
     }
 
