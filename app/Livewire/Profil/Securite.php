@@ -4,6 +4,7 @@ namespace App\Livewire\Profil;
 
 use App\Livewire\Concerns\DansLeProfil;
 use App\Services\CompteService;
+use App\Services\NotificationService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
@@ -50,6 +51,7 @@ class Securite extends Component
 
         $user->forceFill(['password' => $this->nouveau])->save();
         $user->tokens()->delete();
+        app(NotificationService::class)->motDePasseModifie($user);
 
         // Les sessions des autres appareils, liées à l'ancien mot de passe, se
         // ferment d'elles-mêmes ; celle-ci est reconnectée avec le nouveau.

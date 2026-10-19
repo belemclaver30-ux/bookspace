@@ -38,8 +38,8 @@ class ConnexionService
             }
         }
 
-        // Numéro normalisé, ou tel que saisi (comptes créés avant la normalisation).
-        $user = User::whereIn('telephone', [$telephone, trim($telephoneSaisi)])->first();
+        // Numéro normalisé, ou formes des comptes créés avant la normalisation.
+        $user = User::whereIn('telephone', User::variantesTelephone($telephoneSaisi))->first();
 
         if (! $user || ! Hash::check($password, $user->password)) {
             RateLimiter::hit($cleIp, 60);

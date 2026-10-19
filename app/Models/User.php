@@ -57,10 +57,40 @@ class User extends Authenticatable
     public function estGerant(): bool { return $this->role === 'gerant'; }
     public function estAdmin(): bool { return $this->role === 'admin'; }
 
-    /** « +226 70 00 00 01 » -> « +22670000001 » (identifiant de connexion). */
+    /**
+     * Forme internationale servant d'identifiant de connexion :
+     * « 70 00 00 01 », « 0022670000001 », « 226 70 00 00 01 » -> « +22670000001 ».
+     * Un numéro à 8 chiffres est un numéro burkinabè saisi sans indicatif.
+     */
     public static function normaliserTelephone(string $telephone): string
     {
-        return preg_replace('/[\s.\-]+/', '', trim($telephone));
+        $numero = preg_replace('/[\s.\-()]+/', '', trim($telephone));
+
+        return match (true) {
+            str_starts_with($numero, '00') => '+' . substr($numero, 2),
+            (bool) preg_match('/^\d{8}$/', $numero) => '+226' . $numero,
+            (bool) preg_match('/^226\d{8}$/', $numero) => '+' . $numero,
+            default => $numero,
+        };
+    }
+
+    /**
+     * Formes sous lesquelles un numéro saisi peut être enregistré : la forme
+     * normalisée, et celles des comptes créés avant l'ajout automatique de +226.
+     *
+     * @return list<string>
+     */
+    public static function variantesTelephone(string $telephone): array
+    {
+        $normalise = self::normaliserTelephone($telephone);
+
+        return array_values(array_unique(array_filter([
+            $normalise,
+            preg_replace('/[\s.\-()]+/', '', trim($telephone)),
+            trim($telephone),
+            // Numéro burkinabè enregistré sans indicatif.
+            preg_match('/^\+226(\d{8})$/', $normalise, $m) ? $m[1] : null,
+        ])));
     }
 
     // ─── Préférences de notification (actives par défaut) ────────────────────

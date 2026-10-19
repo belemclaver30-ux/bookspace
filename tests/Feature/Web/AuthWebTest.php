@@ -90,6 +90,36 @@ class AuthWebTest extends TestCase
             ->assertHeader('X-Content-Type-Options', 'nosniff');
     }
 
+    /** Numéro tapé sans indicatif, avec espaces ou en 00226 : même compte. */
+    public function test_numero_saisi_sous_toutes_ses_formes(): void
+    {
+        $this->assertSame('+22670000001', User::normaliserTelephone('70 00 00 01'));
+        $this->assertSame('+22670000001', User::normaliserTelephone('00226 70-00-00-01'));
+        $this->assertSame('+22670000001', User::normaliserTelephone('226 70 00 00 01'));
+        $this->assertSame('+33612345678', User::normaliserTelephone('+33 6 12 34 56 78'));
+
+        $user = User::factory()->client()->create(['telephone' => '+22670000001']);
+        Livewire::test(Connexion::class)->set('telephone', '70 00 00 01')->set('password', 'password')
+            ->call('connecter')->assertHasNoErrors();
+        $this->assertAuthenticatedAs($user);
+    }
+
+    public function test_ancien_compte_enregistre_sans_indicatif(): void
+    {
+        $ancien = User::factory()->client()->create(['telephone' => '70000002']);
+
+        Livewire::test(Connexion::class)->set('telephone', '+226 70 00 00 02')->set('password', 'password')
+            ->call('connecter')->assertHasNoErrors();
+        $this->assertAuthenticatedAs($ancien);
+
+        // Impossible de recréer un compte avec le même numéro sous une autre forme.
+        auth()->logout();
+        Livewire::test(Inscription::class)
+            ->set('name', 'Doublon')->set('telephone', '+22670000002')->set('password', 'motdepasse')->set('accepte', true)
+            ->call('inscrire')
+            ->assertHasErrors('telephone');
+    }
+
     public function test_compte_desactive_refuse(): void
     {
         User::factory()->client()->create(['telephone' => '+22670000001', 'actif' => false]);

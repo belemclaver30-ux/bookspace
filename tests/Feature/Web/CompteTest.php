@@ -56,6 +56,7 @@ class CompteTest extends TestCase
     public function test_mot_de_passe_oublie_par_code_sms(): void
     {
         $user = User::factory()->client()->create(['telephone' => '+22670000001']);
+        $user->createToken('mobile');
 
         $this->get('/connexion')->assertSee('/mot-de-passe-oublie', false);
         $this->get('/mot-de-passe-oublie')->assertOk();
@@ -63,20 +64,30 @@ class CompteTest extends TestCase
         $composant = Livewire::test(MotDePasseOublie::class)
             ->set('telephone', '+226 70 00 00 01')
             ->call('envoyerCode')
-            ->assertSet('etape', 'code');
+            ->assertSet('etape', 'code')
+            ->assertSee('Renvoyer le code');
 
         $this->assertCount(1, $this->sms);
         $this->assertSame('+22670000001', $this->sms[0][0]);
 
         $composant->set('code', $this->dernierCode())
+            ->call('verifierCode')
+            ->assertHasNoErrors()
+            ->assertSet('etape', 'nouveau')
+            ->assertSee('Code vérifié')
             ->set('password', 'nouveaumdp')
-            ->set('password_confirmation', 'nouveaumdp')
             ->call('reinitialiser')
             ->assertHasNoErrors()
             ->assertRedirect('/app');
 
         $this->assertTrue(Hash::check('nouveaumdp', $user->fresh()->password));
         $this->assertAuthenticatedAs($user);
+        $this->assertSame(0, $user->tokens()->count());
+        $this->assertSame('Mot de passe modifié. Bienvenue à nouveau !', session('toast'));
+
+        // Alerte de sécurité : SMS (même si l'utilisateur a coupé les SMS) + notification.
+        $this->assertStringContainsString('mot de passe de votre compte a été modifié', end($this->sms)[1]);
+        $this->assertDatabaseHas('app_notifications', ['user_id' => $user->id, 'type' => 'mot_de_passe_modifie']);
     }
 
     public function test_mot_de_passe_oublie_ne_revele_pas_si_le_numero_existe(): void
@@ -86,28 +97,47 @@ class CompteTest extends TestCase
             ->call('envoyerCode')
             ->assertHasNoErrors()
             ->assertSet('etape', 'code')
-            ->assertSee('Si un compte existe');
+            ->assertSee('Si un compte existe')
+            ->set('code', '123456')
+            ->call('verifierCode')
+            ->assertHasErrors('code')
+            ->assertSet('etape', 'code');
 
         $this->assertCount(0, $this->sms);
+    }
+
+    /** L'étape « nouveau » ne s'atteint qu'avec un code vérifié côté serveur. */
+    public function test_impossible_de_sauter_l_etape_du_code(): void
+    {
+        $user = User::factory()->client()->create(['telephone' => '+22670000001']);
+
+        Livewire::test(MotDePasseOublie::class)
+            ->set('telephone', '+22670000001')->call('envoyerCode')
+            ->set('etape', 'nouveau')
+            ->set('password', 'piratage1')
+            ->call('reinitialiser')
+            ->assertHasErrors('code')
+            ->assertSet('etape', 'code');
+
+        $this->assertFalse(Hash::check('piratage1', $user->fresh()->password));
+        $this->assertGuest();
     }
 
     public function test_code_faux_puis_trop_d_essais(): void
     {
         $user = User::factory()->client()->create(['telephone' => '+22670000001']);
 
-        $composant = Livewire::test(MotDePasseOublie::class)
-            ->set('telephone', '+22670000001')->call('envoyerCode')
-            ->set('password', 'nouveaumdp')->set('password_confirmation', 'nouveaumdp');
+        $composant = Livewire::test(MotDePasseOublie::class)->set('telephone', '+22670000001')->call('envoyerCode');
         $bon = $this->dernierCode();
         $faux = $bon === '111111' ? '222222' : '111111';
 
         for ($i = 0; $i < 5; $i++) {
-            $composant->set('code', $faux)->call('reinitialiser')->assertHasErrors('code');
+            $composant->set('code', $faux)->call('verifierCode')->assertHasErrors('code')->assertSet('etape', 'code');
         }
 
         // Même le bon code est refusé après 5 essais : il faut en redemander un.
-        $composant->set('code', $bon)->call('reinitialiser')->assertHasErrors('code');
-        $this->assertFalse(Hash::check('nouveaumdp', $user->fresh()->password));
+        $composant->set('code', $bon)->call('verifierCode')->assertHasErrors('code')->assertSet('etape', 'code');
+        $this->assertTrue(Hash::check('password', $user->fresh()->password));
     }
 
     public function test_code_expire(): void
@@ -119,9 +149,43 @@ class CompteTest extends TestCase
 
         $this->travel(11)->minutes();
 
-        $composant->set('code', $code)->set('password', 'nouveaumdp')->set('password_confirmation', 'nouveaumdp')
-            ->call('reinitialiser')
-            ->assertHasErrors('code');
+        $composant->set('code', $code)->call('verifierCode')->assertHasErrors('code');
+    }
+
+    public function test_trop_lent_apres_le_code(): void
+    {
+        $user = User::factory()->client()->create(['telephone' => '+22670000001']);
+
+        $composant = Livewire::test(MotDePasseOublie::class)->set('telephone', '+22670000001')->call('envoyerCode');
+        $composant->set('code', $this->dernierCode())->call('verifierCode')->assertSet('etape', 'nouveau');
+
+        $this->travel(11)->minutes();
+
+        $composant->set('password', 'nouveaumdp')->call('reinitialiser')
+            ->assertHasErrors('code')->assertSet('etape', 'code');
+        $this->assertFalse(Hash::check('nouveaumdp', $user->fresh()->password));
+    }
+
+    public function test_renvoyer_le_code_apres_le_delai(): void
+    {
+        User::factory()->client()->create(['telephone' => '+22670000001']);
+
+        $composant = Livewire::test(MotDePasseOublie::class)->set('telephone', '+22670000001')->call('envoyerCode');
+        $premier = $this->dernierCode();
+
+        // Trop tôt : refusé, aucun SMS de plus.
+        $composant->call('renvoyerCode')->assertHasErrors('code');
+        $this->assertCount(1, $this->sms);
+
+        $this->travel(MotDePasseOublie::DELAI_RENVOI + 1)->seconds();
+        $composant->call('renvoyerCode')->assertHasNoErrors()->assertSee('Un nouveau code vient');
+        $this->assertCount(2, $this->sms);
+
+        // L'ancien code ne vaut plus rien, le nouveau fonctionne.
+        if ($premier !== $this->dernierCode()) {
+            $composant->set('code', $premier)->call('verifierCode')->assertHasErrors('code');
+        }
+        $composant->set('code', $this->dernierCode())->call('verifierCode')->assertSet('etape', 'nouveau');
     }
 
     public function test_envois_de_codes_limites(): void
@@ -134,6 +198,22 @@ class CompteTest extends TestCase
 
         Livewire::test(MotDePasseOublie::class)->set('telephone', '+22670000001')->call('envoyerCode')->assertHasErrors('telephone');
         $this->assertCount(3, $this->sms);
+    }
+
+    public function test_plus_acces_au_numero_mene_au_support(): void
+    {
+        config(['bookspace.support.whatsapp' => '+226 70 11 22 33', 'bookspace.support.email' => 'aide@bookspace.bf']);
+
+        Livewire::test(MotDePasseOublie::class)
+            ->assertSee('Je n’ai plus accès à mon numéro')
+            ->set('telephone', '+22670000001')->call('envoyerCode')
+            ->call('afficher', 'support')
+            ->assertSet('etape', 'support')
+            ->assertSee('Plus accès à votre numéro ?')
+            ->assertSee('https://wa.me/22670112233?text=', false)
+            ->assertSee('mailto:aide@bookspace.bf', false)
+            ->call('afficher', 'code')
+            ->assertSet('etape', 'code');
     }
 
     // ─── Mon compte ──────────────────────────────────────────────────────────

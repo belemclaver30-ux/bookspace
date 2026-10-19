@@ -155,13 +155,16 @@ class Compte extends Component
             'nouveauTelephone' => [
                 'required', 'string', 'max:30', 'regex:/^\+?\d{8,15}$/',
                 Rule::notIn([$user->telephone]),
-                Rule::unique('users', 'telephone')->ignore($user->id),
+                function (string $attribut, mixed $valeur, \Closure $echec) use ($user) {
+                    if (User::whereIn('telephone', User::variantesTelephone((string) $valeur))->whereKeyNot($user->id)->exists()) {
+                        $echec('Ce numéro est déjà utilisé par un autre compte.');
+                    }
+                },
             ],
             'motDePasseTelephone' => ['required', 'string'],
         ], [
             'nouveauTelephone.regex' => 'Numéro invalide. Exemple : +22670000000.',
             'nouveauTelephone.not_in' => "C'est déjà votre numéro actuel.",
-            'nouveauTelephone.unique' => 'Ce numéro est déjà utilisé par un autre compte.',
         ], [
             'nouveauTelephone' => 'nouveau numéro', 'motDePasseTelephone' => 'mot de passe',
         ]);

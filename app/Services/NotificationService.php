@@ -185,6 +185,24 @@ class NotificationService
         );
     }
 
+    /**
+     * Alerte de sécurité après un changement de mot de passe (oubli ou profil).
+     * Comme les codes de vérification, le SMS part même si l'utilisateur a
+     * coupé les SMS : c'est le seul moyen de détecter un piratage du compte.
+     */
+    public function motDePasseModifie(User $user): void
+    {
+        $support = config('bookspace.support.whatsapp') ?: config('bookspace.support.telephone') ?: config('bookspace.support.email');
+        $contenu = 'Le mot de passe de votre compte a été modifié le ' . now()->format('d/m/Y à H:i') . '. '
+            . "Si ce n'est pas vous, contactez immédiatement le support" . ($support ? " ({$support})" : '') . '.';
+
+        $this->notifier($user, 'mot_de_passe_modifie', 'Mot de passe modifié', $contenu);
+
+        if ($user->telephone) {
+            $this->sms->envoyer($user->telephone, "BookSpace : {$contenu}");
+        }
+    }
+
     /** BookSpace a versé au gérant sa part des acomptes (SMS + fil in-app). */
     public function reversementEffectue(\App\Models\Reversement $reversement): void
     {
