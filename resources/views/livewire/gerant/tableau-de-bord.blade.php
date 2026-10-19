@@ -25,7 +25,7 @@
         Du {{ \Carbon\Carbon::parse($stats['periode']['du'])->format('d/m/Y') }} au {{ \Carbon\Carbon::parse($stats['periode']['au'])->format('d/m/Y') }}
     </div>
 
-    <div class="mb-4 grid grid-cols-[repeat(auto-fill,minmax(min(100%,148px),1fr))] gap-3.5">
+    <div class="mb-4 grid grid-cols-[repeat(auto-fill,minmax(min(100%,148px),1fr))] gap-3.5" data-visite="tableau">
         @foreach ($tuiles as [$libelle, $valeur, $accent])
             <div @class(['rounded-[14px] p-4 shadow-carte', 'bg-brand-dark' => $accent, 'bg-white' => ! $accent])>
                 <div @class(['mb-1 text-[11px]', 'text-white/55' => $accent, 'text-slate-400' => ! $accent])>{{ $libelle }}</div>

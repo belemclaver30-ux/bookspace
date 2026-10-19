@@ -48,6 +48,7 @@ class User extends Authenticatable
             'actif' => 'boolean',
             'notif_sms' => 'boolean',
             'notif_rappels' => 'boolean',
+            'visite_terminee_at' => 'datetime',
         ];
     }
 

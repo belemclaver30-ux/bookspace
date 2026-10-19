@@ -1,6 +1,7 @@
 import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.esm';
 import { carteItineraire, carteLocalisation, positionActuelle } from './cartes';
 import { retourIntelligent } from './retour';
+import { visiteGuidee } from './visite';
 
 // Position du navigateur, utilisable depuis les vues (« Près de moi »).
 window.positionActuelle = positionActuelle;
@@ -9,6 +10,8 @@ window.retourIntelligent = retourIntelligent;
 
 Alpine.data('carteItineraire', carteItineraire);
 Alpine.data('carteLocalisation', carteLocalisation);
+// Visite guidée du nouvel utilisateur (composant Livewire VisiteGuidee).
+Alpine.data('visiteGuidee', visiteGuidee);
 
 // Pastilles « non lus » de la navigation (<x-pastille compteur="…">) : mises à
 // jour sans recharger la page quand un composant Livewire émet `compteur`.

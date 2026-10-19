@@ -14,6 +14,18 @@
 
     <div @class(['w-full max-w-[640px]', 'px-5 pb-6 pt-4' => $client])>
 
+        @unless ($user->estAdmin())
+            <button type="button" wire:click="revoirVisite"
+                    class="mb-5 flex w-full items-center gap-3 rounded-2xl bg-white px-4 py-3.5 text-left shadow-carte">
+                <span class="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-brand-50 text-brand"><x-icone nom="drapeau" /></span>
+                <span class="min-w-0 flex-1">
+                    <span class="block text-sm font-semibold text-ink">Revoir la visite guidée</span>
+                    <span class="block text-xs text-slate-400">Le tour de l'application en une minute</span>
+                </span>
+                <x-icone nom="chevron" taille="16" class="text-slate-400" />
+            </button>
+        @endunless
+
         {{-- ── Questions fréquentes ── --}}
         <h2 class="{{ $titreSection }}">Questions fréquentes</h2>
         <div class="mb-5 divide-y divide-slate-100 overflow-hidden rounded-2xl bg-white shadow-carte">

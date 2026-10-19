@@ -24,8 +24,15 @@ class UserFactory extends Factory
             'password' => static::$password ??= Hash::make('password'),
             'role' => 'client',
             'actif' => true,
+            'visite_terminee_at' => now(),
             'remember_token' => Str::random(10),
         ];
+    }
+
+    /** Compte tout juste créé : la visite guidée ne lui a pas encore été proposée. */
+    public function nouveau(): static
+    {
+        return $this->state(fn () => ['visite_terminee_at' => null]);
     }
 
     public function client(): static

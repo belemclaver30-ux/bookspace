@@ -19,7 +19,7 @@
         <aside class="sticky top-0 hidden h-dvh w-[230px] flex-col bg-brand-dark px-4 py-6 text-white min-[900px]:flex">
             <div class="px-2 pb-5 font-display text-[19px] font-extrabold">BookSpace</div>
             @foreach ($liens as [$url, $icone, $libelle, $actif, $pastille, $compteur])
-                <a href="{{ $url }}" @class([
+                <a href="{{ $url }}" data-visite="nav-{{ trim($url, '/') }}" @class([
                     'mb-[3px] flex items-center gap-3 rounded-[10px] px-3.5 py-[11px] text-sm font-semibold',
                     'bg-brand text-white' => $actif,
                     'text-white/60 hover:text-white' => ! $actif,
@@ -37,7 +37,7 @@
 
             <nav class="sticky bottom-0 flex h-[70px] items-center justify-around border-t border-slate-100 bg-white shadow-[0_-4px_20px_rgba(120,40,15,0.06)] min-[900px]:hidden">
                 @foreach ($liens as [$url, $icone, $libelle, $actif, $pastille, $compteur])
-                    <a href="{{ $url }}" @class(['flex min-w-0 flex-1 flex-col items-center gap-[3px] py-2', 'text-brand' => $actif, 'text-slate-400' => ! $actif])
+                    <a href="{{ $url }}" data-visite="nav-{{ trim($url, '/') }}" @class(['flex min-w-0 flex-1 flex-col items-center gap-[3px] py-2', 'text-brand' => $actif, 'text-slate-400' => ! $actif])
                        @if ($actif) aria-current="page" @endif>
                         <span class="relative">
                             <x-icone :nom="$icone" taille="22" />
@@ -49,4 +49,8 @@
             </nav>
         </div>
     </div>
+
+    @if (\App\Livewire\VisiteGuidee::aProposer($user))
+        <livewire:visite-guidee />
+    @endif
 </x-layouts.base>

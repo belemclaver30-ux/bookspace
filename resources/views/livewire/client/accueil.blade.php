@@ -5,9 +5,9 @@
                 <div class="text-xs font-medium text-white/55">Bonjour, {{ str(auth()->user()->name)->before(' ') }} 👋</div>
                 <h1 class="mt-0.5 font-display text-xl font-bold text-white">Trouvez votre espace</h1>
             </div>
-            <x-cloche />
+            <x-cloche data-visite="cloche" />
         </div>
-        <label class="flex items-center gap-2.5 rounded-[14px] bg-white px-3.5 py-3 text-slate-500">
+        <label data-visite="recherche" class="flex items-center gap-2.5 rounded-[14px] bg-white px-3.5 py-3 text-slate-500">
             <x-icone nom="recherche" />
             <span class="sr-only">Chercher un espace</span>
             <input type="search" wire:model.live.debounce.400ms="q" placeholder="Chercher un espace..."
@@ -29,7 +29,7 @@
                 }
             },
          }">
-        <div class="flex flex-wrap gap-2">
+        <div class="flex flex-wrap gap-2" data-visite="filtres">
             @foreach ([['tous', 'Tous', null], ['salle_repetition', 'Salle de répétition', 'musique'], ['terrain_foot', 'Terrain de football', 'football']] as [$id, $libelle, $icone])
                 <button type="button" wire:click="filtrer('{{ $id }}')" @class(['puce', 'puce-active' => $filtre === $id])
                         aria-pressed="{{ $filtre === $id ? 'true' : 'false' }}">
@@ -37,7 +37,7 @@
                     {{ $libelle }}
                 </button>
             @endforeach
-            <button type="button" @click="basculerProximite()" @class(['puce', 'puce-active' => $proche])
+            <button type="button" data-visite="proximite" @click="basculerProximite()" @class(['puce', 'puce-active' => $proche])
                     aria-pressed="{{ $proche ? 'true' : 'false' }}">
                 <x-icone nom="lieu" taille="13" />Près de moi
             </button>
@@ -51,7 +51,7 @@
         </div>
 
         @forelse ($espaces as $espace)
-            <x-carte-espace :espace="$espace" wire:key="espace-{{ $espace->id }}" />
+            <x-carte-espace :espace="$espace" wire:key="espace-{{ $espace->id }}" :data-visite="$loop->first ? 'espace' : null" />
         @empty
             <x-vide titre="Aucun espace" sous-titre="Essayez d'élargir votre recherche." />
         @endforelse

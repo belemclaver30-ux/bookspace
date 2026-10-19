@@ -25,6 +25,7 @@ Ouvrir `http://127.0.0.1:8000` (pas `localhost` : `php artisan serve` n'écoute 
   - `Notifications`, `Profil` (communs) ; `Profil/` (Compte = photo, infos, changement de numéro vérifié par SMS, compte de versement Mobile Money du gérant ; Securite = mot de passe, déconnexion des autres appareils, suppression du compte ; Preferences = SMS/rappels ; Aide = FAQ par rôle + contact + signalement → `Litige` ; Favoris (client) ; Revenus (gérant, 12 mois))
   - `Auth/MotDePasseOublie` — réinitialisation par code SMS
   - `Messages/` (Boite = boîte de réception, Fil = discussion, rafraîchie toutes les 10 s) — messagerie client ↔ gérant, ouverte depuis une réservation (`/messages/reservation/{id}`) ; rôles client et gérant uniquement
+  - `VisiteGuidee` — visite guidée proposée une fois au nouvel utilisateur (client sur `/app`, gérant sur `/gerant`, colonne `users.visite_terminee_at`), relançable depuis Profil > Aide. Les étapes (PHP) visent des éléments `data-visite="…"` ; placement et navigation dans `resources/js/visite.js`. Renommer ou retirer un `data-visite` casse l'étape correspondante.
   - `Notifications` — notifications dépliables au clic (texte complet + lien vers la page concernée), marquées lues à l'ouverture
 - `resources/views/livewire/` — vues des composants ; `resources/views/onboarding.blade.php` — accueil public.
 - `resources/views/legal/` — conditions d'utilisation et politique de confidentialité (pages publiques `/conditions`, `/confidentialite`). **Projets de texte à faire valider par un juriste.**

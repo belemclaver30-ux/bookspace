@@ -39,7 +39,8 @@
     $titrePage = collect($liens)->first(fn ($l) => $l[3])[2] ?? $titreEspace;
 @endphp
 <x-layouts.base :title="$title ?? $titrePage">
-    <div class="flex min-h-dvh bg-[#EEF2F7]" x-data="{ ouvert: false }" @keydown.escape.window="ouvert = false">
+    <div class="flex min-h-dvh bg-[#EEF2F7]" x-data="{ ouvert: false }" @keydown.escape.window="ouvert = false"
+         @visite-menu.window="ouvert = $event.detail">
         {{-- Voile du tiroir mobile --}}
         <div x-cloak x-show="ouvert" x-transition.opacity @click="ouvert = false"
              class="fixed inset-0 z-40 bg-black/45 min-[901px]:hidden"></div>
@@ -53,7 +54,7 @@
 
             <nav class="flex flex-1 flex-col gap-[3px] overflow-y-auto px-3 py-3.5">
                 @foreach ($liens as [$url, $icone, $libelle, $actif, $pastille])
-                    <a href="{{ $url }}" @class([
+                    <a href="{{ $url }}" data-visite="nav-{{ basename($url) }}" @class([
                         'flex items-center gap-3 rounded-[10px] px-3.5 py-[11px] text-sm font-semibold',
                         'bg-brand text-white' => $actif,
                         'text-white/60 hover:text-white' => ! $actif,
@@ -81,12 +82,12 @@
 
         <div class="flex min-w-0 flex-1 flex-col">
             <header class="sticky top-0 z-20 flex h-[58px] items-center gap-3 border-b border-slate-200 bg-white px-5">
-                <button type="button" @click="ouvert = true" aria-label="Ouvrir le menu" class="p-1 text-brand-dark min-[901px]:hidden">
+                <button type="button" @click="ouvert = true" aria-label="Ouvrir le menu" data-visite="menu" class="p-1 text-brand-dark min-[901px]:hidden">
                     <x-icone nom="menu" taille="24" />
                 </button>
                 <div class="flex-1 font-display text-[15px] font-bold text-brand-dark">{{ $titrePage }}</div>
                 @unless ($admin)
-                    <div class="rounded-xl bg-brand-dark"><x-cloche /></div>
+                    <div class="rounded-xl bg-brand-dark"><x-cloche data-visite="cloche" /></div>
                 @endunless
             </header>
 
@@ -95,4 +96,8 @@
             </main>
         </div>
     </div>
+
+    @if (\App\Livewire\VisiteGuidee::aProposer($user))
+        <livewire:visite-guidee />
+    @endif
 </x-layouts.base>

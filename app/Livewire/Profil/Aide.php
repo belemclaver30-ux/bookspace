@@ -30,6 +30,17 @@ class Aide extends Component
 
     public bool $envoye = false;
 
+    /** Relance la visite guidée : elle s'ouvre sur la page d'accueil du rôle. */
+    public function revoirVisite()
+    {
+        $user = auth()->user();
+        abort_if($user->estAdmin(), 403);
+
+        $user->forceFill(['visite_terminee_at' => null])->save();
+
+        return $this->redirect($user->accueil());
+    }
+
     public function signaler(): void
     {
         $user = auth()->user();
