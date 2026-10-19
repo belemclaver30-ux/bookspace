@@ -115,6 +115,81 @@
             <p class="text-[11px] text-slate-400">JPEG / PNG / WebP · 8 Mo max par photo · {{ $photosMax }} photos max.</p>
         </section>
 
+        {{-- ── Vue immersive ── --}}
+        @php $nbAngles = $vues->filter(fn ($v) => $v->type === 'angle')->count(); $pano = $vues->get('panorama-0'); @endphp
+        <section class="rounded-2xl bg-white p-4 shadow-carte-lg">
+            <div class="mb-1 flex items-center justify-between gap-2">
+                <h2 class="titre-section">Vue immersive</h2>
+                <span @class(['rounded-full px-2.5 py-0.5 text-[11px] font-bold',
+                    'bg-green-100 text-green-700' => $nbAngles === 4 || $pano,
+                    'bg-slate-100 text-slate-500' => ! ($nbAngles === 4 || $pano)])>
+                    {{ $pano ? '360° en ligne' : ($nbAngles === 4 ? 'En ligne' : "{$nbAngles}/4") }}
+                </span>
+            </div>
+            <p class="mb-3 text-xs leading-relaxed text-slate-500">
+                Les clients « tournent » dans votre espace avant de réserver. Placez-vous <b>au centre</b>, téléphone
+                <b>à l'horizontale</b> et à hauteur des yeux. Photographiez d'abord l'entrée, puis tournez d'un quart de tour
+                vers la droite entre chaque photo.
+            </p>
+
+            @error('angles.*') <x-erreur :message="$message" /> @enderror
+
+            <div class="mb-2 grid grid-cols-2 gap-2.5">
+                @foreach ($nomsAngles as $position => $nom)
+                    @php $vue = $vues->get("angle-{$position}"); @endphp
+                    <div wire:key="angle-{{ $position }}" class="relative aspect-[4/3] overflow-hidden rounded-[10px]">
+                        @if ($vue)
+                            <img src="{{ $vue->url }}" alt="Vue {{ $nom }}" loading="lazy" class="h-full w-full object-cover">
+                            <span class="absolute left-1.5 top-1.5 rounded-md bg-black/60 px-1.5 py-0.5 text-[10px] font-bold text-white">{{ $position + 1 }} · {{ $nom }}</span>
+                            <div class="absolute inset-x-1 bottom-1 flex gap-1">
+                                <label class="flex-1 cursor-pointer rounded-md bg-white/90 py-[3px] text-center text-[10px] font-bold text-brand-dark focus-within:ring-2 focus-within:ring-brand">
+                                    Reprendre
+                                    <input type="file" wire:model="angles.{{ $position }}" accept="image/*" class="sr-only" aria-label="Reprendre la vue {{ $nom }}">
+                                </label>
+                                <button type="button" wire:click="supprimerVue({{ $vue->id }})" wire:confirm="Supprimer cette vue ?"
+                                        class="rounded-md bg-black/55 px-2 text-[12px] leading-none text-white" aria-label="Supprimer la vue {{ $nom }}">×</button>
+                            </div>
+                        @else
+                            <label class="flex h-full cursor-pointer flex-col items-center justify-center gap-1 border-2 border-dashed border-slate-200 bg-[#FFF8F3] text-center text-xs font-semibold text-brand-dark focus-within:border-brand">
+                                <span class="text-[11px] font-bold text-brand">Photo {{ $position + 1 }}/4</span>
+                                <span wire:loading.remove wire:target="angles.{{ $position }}">{{ $nom }}{{ $position === 0 ? ' (entrée)' : '' }}</span>
+                                <span wire:loading wire:target="angles.{{ $position }}">Envoi…</span>
+                                <input type="file" wire:model="angles.{{ $position }}" accept="image/*" class="sr-only" aria-label="Photo {{ $position + 1 }} : {{ $nom }}">
+                            </label>
+                        @endif
+                    </div>
+                @endforeach
+            </div>
+            <p class="mb-4 text-[11px] text-slate-400">Les 4 photos sont nécessaires pour que la vue apparaisse sur votre fiche.</p>
+
+            <details class="rounded-xl bg-slate-50 px-3.5 py-3" @if ($pano || $errors->has('panorama')) open @endif>
+                <summary class="cursor-pointer text-[13px] font-semibold text-slate-700">Vous avez une photo 360° ? (facultatif)</summary>
+                <p class="mb-2.5 mt-2 text-xs leading-relaxed text-slate-500">
+                    Photo d'une caméra 360° (Insta360, Ricoh Theta…) ou panorama fait avec le téléphone sur un tour complet.
+                    Elle remplace alors les 4 angles sur votre fiche.
+                </p>
+                @error('panorama') <x-erreur :message="$message" /> @enderror
+                @if ($pano)
+                    <div class="mb-2 overflow-hidden rounded-[10px]">
+                        <img src="{{ $pano->url }}" alt="Panorama 360°" loading="lazy" class="h-20 w-full object-cover">
+                    </div>
+                    <div class="flex gap-2">
+                        <label class="btn-mini cursor-pointer bg-white text-brand-dark focus-within:ring-2 focus-within:ring-brand">
+                            Remplacer <input type="file" wire:model="panorama" accept="image/*" class="sr-only">
+                        </label>
+                        <button type="button" wire:click="supprimerVue({{ $pano->id }})" wire:confirm="Supprimer le panorama 360° ?"
+                                class="btn-mini bg-white text-red-600">Supprimer</button>
+                    </div>
+                @else
+                    <label class="btn-mini inline-block cursor-pointer bg-brand text-white focus-within:ring-2 focus-within:ring-brand-dark">
+                        <span wire:loading.remove wire:target="panorama">Ajouter une photo 360°</span>
+                        <span wire:loading wire:target="panorama">Envoi…</span>
+                        <input type="file" wire:model="panorama" accept="image/*" class="sr-only">
+                    </label>
+                @endif
+            </details>
+        </section>
+
         {{-- ── Localisation ── --}}
         <section class="rounded-2xl bg-white p-4 shadow-carte-lg"
                  x-data="carteLocalisation"

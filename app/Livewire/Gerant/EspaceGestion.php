@@ -6,6 +6,7 @@ use App\Livewire\Concerns\AvecGerant;
 use App\Models\Espace;
 use App\Services\GeoService;
 use App\Services\PhotoEspaceService;
+use App\Services\VueImmersiveService;
 use Illuminate\Validation\ValidationException;
 use Livewire\Attributes\Layout;
 use Livewire\Component;
@@ -51,6 +52,13 @@ class EspaceGestion extends Component
     // ─── Photos ──────────────────────────────────────────────────────────────
     /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile> */
     public array $nouvellesPhotos = [];
+
+    // ─── Vue immersive (4 angles, panorama 360°) ─────────────────────────────
+    /** @var array<int, \Livewire\Features\SupportFileUploads\TemporaryUploadedFile> clé = position de l'angle */
+    public array $angles = [];
+
+    /** @var \Livewire\Features\SupportFileUploads\TemporaryUploadedFile|null */
+    public $panorama = null;
 
     // ─── Localisation ────────────────────────────────────────────────────────
     public ?float $latitude = null;
@@ -163,6 +171,44 @@ class EspaceGestion extends Component
     public function photoPrincipale(int $id, PhotoEspaceService $photos): void
     {
         $photos->definirPrincipale($this->espace, $this->espace->photos()->findOrFail($id));
+    }
+
+    // ─── Vue immersive ───────────────────────────────────────────────────────
+
+    /** Envoi dès la prise de vue : `$position` = clé de `angles` (0 face … 3 gauche). */
+    public function updatedAngles($fichier, $position): void
+    {
+        try {
+            abort_unless(ctype_digit((string) $position), 422);
+
+            $this->validate(
+                ["angles.{$position}" => ['image', 'max:15360']],
+                ["angles.{$position}.image" => 'Choisissez une photo.', "angles.{$position}.max" => 'La photo doit faire 15 Mo au maximum.'],
+            );
+
+            app(VueImmersiveService::class)->definirAngle($this->espace, (int) $position, $fichier);
+        } finally {
+            $this->angles = [];
+        }
+    }
+
+    public function updatedPanorama(): void
+    {
+        try {
+            $this->validate(
+                ['panorama' => ['image', 'max:30720']],
+                ['panorama.image' => 'Choisissez une photo.', 'panorama.max' => 'Le panorama doit faire 30 Mo au maximum.'],
+            );
+
+            app(VueImmersiveService::class)->definirPanorama($this->espace, $this->panorama);
+        } finally {
+            $this->panorama = null;
+        }
+    }
+
+    public function supprimerVue(int $id, VueImmersiveService $vues): void
+    {
+        $vues->supprimer($this->espace->vues()->findOrFail($id));
     }
 
     // ─── Localisation ────────────────────────────────────────────────────────
@@ -304,6 +350,8 @@ class EspaceGestion extends Component
     {
         return view('livewire.gerant.espace-gestion', [
             'photos' => $this->espace->photos()->get(),
+            'vues' => $this->espace->vues()->get()->keyBy(fn ($v) => "{$v->type}-{$v->position}"),
+            'nomsAngles' => \App\Models\EspaceVue::ANGLES,
             'blocages' => $this->espace->blocages()->orderBy('date_debut')->get(),
             'jours' => ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
             'photosMax' => self::PHOTOS_MAX,

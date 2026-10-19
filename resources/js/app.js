@@ -2,6 +2,7 @@ import { Livewire, Alpine } from '../../vendor/livewire/livewire/dist/livewire.e
 import { carteItineraire, carteLocalisation, positionActuelle } from './cartes';
 import { retourIntelligent } from './retour';
 import { visiteGuidee } from './visite';
+import { vueImmersive } from './vue-immersive';
 
 // Position du navigateur, utilisable depuis les vues (« Près de moi »).
 window.positionActuelle = positionActuelle;
@@ -12,6 +13,8 @@ Alpine.data('carteItineraire', carteItineraire);
 Alpine.data('carteLocalisation', carteLocalisation);
 // Visite guidée du nouvel utilisateur (composant Livewire VisiteGuidee).
 Alpine.data('visiteGuidee', visiteGuidee);
+// Vue immersive d'un espace : 4 angles ou panorama 360° (<x-vue-immersive>).
+Alpine.data('vueImmersive', vueImmersive);
 
 // Pastilles « non lus » de la navigation (<x-pastille compteur="…">) : mises à
 // jour sans recharger la page quand un composant Livewire émet `compteur`.

@@ -34,6 +34,8 @@
         'revenus' => '<rect x="2" y="6" width="20" height="13" rx="2" /><circle cx="12" cy="12.5" r="2.5" /><path d="M6 10v.01M18 15v.01" />',
         'envoyer' => '<path d="M22 2 11 13M22 2l-7 20-4-9-9-4z" />',
         'menu' => '<path d="M3 6h18M3 12h18M3 18h18" />',
+        'rotation' => '<path d="M21 12a9 9 0 1 1-3-6.7" /><path d="M21 4v5h-5" /><circle cx="12" cy="12" r="2.5" />',
+        'fermer' => '<path d="M18 6 6 18M6 6l12 12" />',
     ];
 @endphp
 <svg {{ $attributes->merge(['class' => 'shrink-0']) }} width="{{ $taille }}" height="{{ $taille }}" viewBox="0 0 24 24"

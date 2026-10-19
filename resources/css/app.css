@@ -114,3 +114,9 @@
     animation: spin 0.8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+
+/* Indice « glissez » de la vue immersive (<x-vue-immersive>). */
+@keyframes glisser {
+    0%, 100% { transform: translateX(-8px); }
+    50% { transform: translateX(8px); }
+}

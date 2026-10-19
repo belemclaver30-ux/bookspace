@@ -4,6 +4,7 @@ namespace App\Livewire\Client;
 
 use App\Models\Espace;
 use App\Services\GeoService;
+use App\Services\VueImmersiveService;
 use Livewire\Attributes\Layout;
 use Livewire\Attributes\Renderless;
 use Livewire\Component;
@@ -63,12 +64,14 @@ class EspaceFiche extends Component
     {
         $this->espace->loadMissing([
             'photos',
+            'vues',
             'gerant',
             'evaluations' => fn ($q) => $q->with('client')->latest()->limit(20),
         ]);
 
         return view('livewire.client.espace-fiche', [
             'favori' => auth()->user()->favoris()->whereKey($this->espace->id)->exists(),
+            'immersif' => app(VueImmersiveService::class)->pourVisionneuse($this->espace),
         ])->title($this->espace->nom);
     }
 }

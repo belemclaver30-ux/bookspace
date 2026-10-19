@@ -18,6 +18,14 @@
                 <x-icone nom="coeur" taille="20" :plein="$favori" />
             </button>
         @endif
+        @if ($immersif)
+            <button type="button" @click="$dispatch('ouvrir-vue-immersive')"
+                    @class(['absolute right-3 flex items-center gap-1.5 rounded-full bg-black/60 px-3.5 py-2 text-[12.5px] font-bold text-white shadow-carte backdrop-blur-sm',
+                        'bottom-[62px]' => count($galerie) > 1, 'bottom-3' => count($galerie) <= 1])>
+                <x-icone nom="rotation" taille="16" />
+                {{ $immersif['type'] === 'panorama' ? 'Vue 360°' : 'Visiter · 4 angles' }}
+            </button>
+        @endif
         @if (count($galerie) > 1)
             <div class="absolute bottom-2.5 left-3 right-3 flex gap-1.5 overflow-x-auto pb-0.5">
                 @foreach ($galerie as $i => $url)
@@ -150,4 +158,8 @@
             <button type="button" class="btn-primaire" disabled>Réservation réservée aux comptes clients</button>
         @endif
     </div>
+
+    @if ($immersif)
+        <x-vue-immersive :donnees="$immersif" :titre="$espace->nom" />
+    @endif
 </div>

@@ -48,7 +48,8 @@ Les composants Livewire et les contrôleurs d'API délèguent aux mêmes service
 - `NotificationService` + `Sms/` — fil in-app + SMS (`log` en dev). Respecte les préférences de l'utilisateur (`users.notif_sms`, `users.notif_rappels`) : passer par `notifier()`, ne jamais appeler la passerelle SMS directement pour un utilisateur ayant un compte.
 - `StatistiquesService` — tableaux de bord gérant et admin.
 - `ReversementService` — part des acomptes due aux gérants (réservations en ligne **terminées**, hors réservations manuelles) ; l'admin enregistre le virement Mobile Money fait hors application (table `reversements`, `reservations.reversement_id`).
-- `PhotoEspaceService` / `ImageConversionService` — photos converties en WebP.
+- `PhotoEspaceService` / `ImageConversionService` — photos converties en WebP (orientation EXIF des téléphones appliquée).
+- `VueImmersiveService` — vue immersive d'un espace (table `espace_vues`) : 4 angles pris du centre (face, droite, arrière, gauche ; visible seulement quand les 4 sont là) et panorama 360° facultatif (≥ 2:1, réduit à 4096 px) qui prend le pas sur les angles. Visionneuse `<x-vue-immersive>` + `resources/js/vue-immersive.js` ; Photo Sphere Viewer (three.js) n'est chargé qu'à l'ouverture d'une vue 360°.
 - `InscriptionService`, `GeoService` (Nominatim/OSRM).
 - `ConnexionService` — vérification des identifiants pour le web et l'API, avec limites anti-force brute (par numéro+IP et par numéro).
 - `CodeVerificationService` — codes SMS à 6 chiffres (hachés, 10 min, 5 essais, 3 envois/h par numéro) ; partent même si l'utilisateur a coupé les SMS.

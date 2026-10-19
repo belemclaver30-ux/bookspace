@@ -53,7 +53,7 @@ classique, par numéro de téléphone.
 ## Modèle de données (TDR §7)
 
 `users` (Client/Gérant/Admin) · `gerants` · `espaces` (salle_repetition |
-terrain_foot, héritage single-table) · `espace_photos` · `espace_disponibilites`
+terrain_foot, héritage single-table) · `espace_photos` · `espace_vues` (vue immersive : 4 angles / 360°) · `espace_disponibilites`
 (horaires hebdo) · `espace_blocages` · `reservations` · `paiements` (Mobile
 Money) · `evaluations` · `demandes_modification` · `app_notifications` ·
 `litiges` · `reversements` · `parametres` (commission, acompte…) · `audit_events`

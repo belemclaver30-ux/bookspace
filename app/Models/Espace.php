@@ -71,6 +71,12 @@ class Espace extends Model
         return $this->hasMany(EspacePhoto::class)->orderBy('ordre');
     }
 
+    /** Vue immersive : 4 angles et/ou panorama 360° (voir EspaceVue). */
+    public function vues(): HasMany
+    {
+        return $this->hasMany(EspaceVue::class)->orderBy('type')->orderBy('position');
+    }
+
     public function disponibilites(): HasMany
     {
         return $this->hasMany(EspaceDisponibilite::class);
