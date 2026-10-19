@@ -3,6 +3,7 @@ import { carteItineraire, carteLocalisation, positionActuelle } from './cartes';
 import { retourIntelligent } from './retour';
 import { visiteGuidee } from './visite';
 import { vueImmersive } from './vue-immersive';
+import { synchroniserAvantEnvoi } from './formulaires';
 
 // Position du navigateur, utilisable depuis les vues (« Près de moi »).
 window.positionActuelle = positionActuelle;
@@ -25,5 +26,8 @@ window.addEventListener('compteur', ({ detail }) => {
         el.setAttribute('aria-label', `${detail.nombre} non lu${detail.nombre > 1 ? 's' : ''}`);
     });
 });
+
+// Champs remplis automatiquement sans événement : relus avant chaque envoi (voir formulaires.js).
+synchroniserAvantEnvoi();
 
 Livewire.start();
