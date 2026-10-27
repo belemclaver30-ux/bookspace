@@ -17,7 +17,12 @@
                 <div class="mb-2 flex items-start justify-between gap-3">
                     <div class="min-w-0">
                         <div class="truncate text-[15px] font-bold text-brand-dark">{{ $r->espace?->nom ?? 'Espace' }}</div>
-                        <div class="text-xs text-slate-400">{{ $r->reference }}</div>
+                        <div class="text-xs text-slate-400">
+                            {{ $r->reference }}
+                            @if ($r->abonnement_id)
+                                <span class="ml-1 rounded-full bg-gold/15 px-[7px] py-0.5 text-[10px] font-bold text-brand-dark">Abonnement</span>
+                            @endif
+                        </div>
                     </div>
                     <x-badge-statut :statut="$r->statut" />
                 </div>

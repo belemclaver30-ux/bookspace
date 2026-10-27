@@ -20,7 +20,7 @@ class Reservation extends Model
 
     protected $fillable = [
         'reference', 'client_id', 'client_nom', 'client_telephone', 'origine', 'espace_id', 'gerant_id',
-        'date_debut', 'date_fin', 'duree_heures',
+        'abonnement_id', 'date_debut', 'date_fin', 'duree_heures',
         'prix_total', 'taux_acompte', 'montant_acompte',
         'taux_commission', 'montant_commission', 'montant_reverse_gerant', 'reversement_id',
         'statut', 'annulee_par', 'motif_annulation',
@@ -71,6 +71,12 @@ class Reservation extends Model
     public function gerant(): BelongsTo
     {
         return $this->belongsTo(Gerant::class);
+    }
+
+    /** Non nul si cette séance appartient à un abonnement (TDR §8 — amélioration). */
+    public function abonnement(): BelongsTo
+    {
+        return $this->belongsTo(Abonnement::class);
     }
 
     public function reversement(): BelongsTo

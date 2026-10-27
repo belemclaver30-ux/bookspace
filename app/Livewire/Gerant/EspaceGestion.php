@@ -83,12 +83,20 @@ class EspaceGestion extends Component
 
     public string $blocageMotif = '';
 
+    // ─── Abonnement (réservations récurrentes) ──────────────────────────────
+    public bool $abonnement_actif = false;
+
+    public string $formuleSeances = '';
+
+    public string $formulePrix = '';
+
     public function mount(Espace $espace): void
     {
         abort_unless($espace->gerant_id === $this->gerant()->id, 403);
 
         $this->espace = $espace;
         $this->chargerFiche();
+        $this->abonnement_actif = (bool) $espace->abonnement_actif;
         $this->latitude = $espace->latitude;
         $this->longitude = $espace->longitude;
         $this->adresse = $espace->adresse;
@@ -346,6 +354,42 @@ class EspaceGestion extends Component
         $this->espace->blocages()->whereKey($id)->delete();
     }
 
+    // ─── Abonnement (réservations récurrentes) ──────────────────────────────
+
+    public function basculerAbonnement(): void
+    {
+        $this->abonnement_actif = ! $this->abonnement_actif;
+        $this->espace->update(['abonnement_actif' => $this->abonnement_actif]);
+    }
+
+    public function ajouterFormule(): void
+    {
+        $data = $this->validate([
+            'formuleSeances' => ['required', 'integer', 'min:2', 'max:52'],
+            'formulePrix' => ['required', 'numeric', 'min:1', 'max:100000000'],
+        ], [], [
+            'formuleSeances' => 'nombre de séances', 'formulePrix' => 'prix',
+        ]);
+
+        $this->espace->abonnementFormules()->create([
+            'nombre_seances' => $data['formuleSeances'],
+            'prix' => $data['formulePrix'],
+        ]);
+
+        $this->reset('formuleSeances', 'formulePrix');
+    }
+
+    public function basculerFormule(int $id): void
+    {
+        $formule = $this->espace->abonnementFormules()->findOrFail($id);
+        $formule->update(['actif' => ! $formule->actif]);
+    }
+
+    public function supprimerFormule(int $id): void
+    {
+        $this->espace->abonnementFormules()->whereKey($id)->delete();
+    }
+
     public function render()
     {
         return view('livewire.gerant.espace-gestion', [
@@ -355,6 +399,7 @@ class EspaceGestion extends Component
             'blocages' => $this->espace->blocages()->orderBy('date_debut')->get(),
             'jours' => ['Dimanche', 'Lundi', 'Mardi', 'Mercredi', 'Jeudi', 'Vendredi', 'Samedi'],
             'photosMax' => self::PHOTOS_MAX,
+            'formules' => $this->espace->abonnementFormules()->get(),
         ])->title($this->espace->nom);
     }
 

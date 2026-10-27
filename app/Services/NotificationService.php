@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\Abonnement;
 use App\Models\AppNotification;
 use App\Models\Reservation;
 use App\Models\User;
@@ -132,6 +133,62 @@ class NotificationService
                     'Réservation annulée',
                     "La réservation {$reservation->reference} a été annulée.",
                     ['reservation_id' => $reservation->id],
+                );
+            }
+        }
+    }
+
+    public function abonnementCree(Abonnement $abonnement): void
+    {
+        $this->notifier(
+            $abonnement->client,
+            'abonnement_cree',
+            'Abonnement enregistré',
+            "Votre abonnement {$abonnement->reference} ({$abonnement->nombre_seances} séances) est en attente de paiement de l'acompte.",
+            ['abonnement_id' => $abonnement->id],
+        );
+    }
+
+    /** Acompte unique validé : toutes les séances sont confirmées d'un coup, une seule notification. */
+    public function abonnementConfirme(Abonnement $abonnement): void
+    {
+        $abonnement->loadMissing('espace.gerant.user', 'client');
+        $premiere = $abonnement->reservations()->oldest('date_debut')->first();
+        $depart = $premiere ? $premiere->date_debut->format('d/m/Y à H:i') : '—';
+
+        $this->notifier(
+            $abonnement->client,
+            'abonnement_confirme',
+            'Abonnement confirmé',
+            "Votre abonnement « {$abonnement->espace->nom} » est confirmé : {$abonnement->nombre_seances} séances, à partir du {$depart}.",
+            ['abonnement_id' => $abonnement->id],
+            'sms',
+        );
+
+        if ($proprietaire = $abonnement->espace->gerant->user ?? null) {
+            $this->notifier(
+                $proprietaire,
+                'nouvel_abonnement',
+                'Nouvel abonnement reçu',
+                "{$abonnement->client->name} s'est abonné à « {$abonnement->espace->nom} » : {$abonnement->nombre_seances} séances, à partir du {$depart}.",
+                ['abonnement_id' => $abonnement->id],
+                'sms',
+            );
+        }
+    }
+
+    public function abonnementAnnulee(Abonnement $abonnement): void
+    {
+        $abonnement->loadMissing('espace.gerant.user', 'client');
+
+        foreach ([$abonnement->client, $abonnement->espace->gerant->user ?? null] as $destinataire) {
+            if ($destinataire) {
+                $this->notifier(
+                    $destinataire,
+                    'abonnement_annulee',
+                    'Abonnement annulé',
+                    "L'abonnement {$abonnement->reference} a été annulé.",
+                    ['abonnement_id' => $abonnement->id],
                 );
             }
         }

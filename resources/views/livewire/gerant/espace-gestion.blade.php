@@ -310,5 +310,56 @@
                 <button type="submit" class="btn-primaire" wire:loading.attr="disabled" wire:target="bloquer">Bloquer cette plage</button>
             </form>
         </section>
+
+        {{-- ── Abonnement (réservations récurrentes) ── --}}
+        <section class="rounded-2xl bg-white p-4 shadow-carte-lg">
+            <div class="mb-1 flex items-center justify-between gap-2">
+                <h2 class="titre-section">Abonnement</h2>
+                <button type="button" wire:click="basculerAbonnement" role="switch" aria-checked="{{ $abonnement_actif ? 'true' : 'false' }}"
+                        class="relative h-6 w-11 shrink-0 rounded-full transition-colors {{ $abonnement_actif ? 'bg-brand' : 'bg-slate-200' }}">
+                    <span class="absolute top-0.5 h-5 w-5 rounded-full bg-white shadow transition-transform {{ $abonnement_actif ? 'translate-x-[22px]' : 'translate-x-0.5' }}"></span>
+                </button>
+            </div>
+            <p class="mb-3 text-xs leading-relaxed text-slate-500">
+                Permet aux clients de réserver un pack de plusieurs séances hebdomadaires en une seule fois, payées
+                en un seul acompte. Vous fixez librement le prix de chaque pack.
+            </p>
+
+            @if ($abonnement_actif)
+                @error('formuleSeances') <x-erreur :message="$message" /> @enderror
+                @error('formulePrix') <x-erreur :message="$message" /> @enderror
+
+                @forelse ($formules as $f)
+                    <div wire:key="formule-{{ $f->id }}" class="mb-2 flex items-center justify-between gap-2 rounded-[10px] bg-slate-50 px-3 py-2.5">
+                        <div class="text-xs text-slate-700">
+                            <span class="font-semibold text-brand-dark">{{ $f->nombre_seances }} séances</span> · {{ nombre($f->prix) }} FCFA
+                            @unless ($f->actif) <span class="text-slate-400">· désactivée</span> @endunless
+                        </div>
+                        <div class="flex shrink-0 gap-3">
+                            <button type="button" wire:click="basculerFormule({{ $f->id }})" class="text-xs font-semibold text-brand-dark">
+                                {{ $f->actif ? 'Désactiver' : 'Activer' }}
+                            </button>
+                            <button type="button" wire:click="supprimerFormule({{ $f->id }})" wire:confirm="Supprimer cette formule ?" class="text-xs font-semibold text-red-600">
+                                Supprimer
+                            </button>
+                        </div>
+                    </div>
+                @empty
+                    <div class="mb-3 text-[13px] text-slate-400">Aucune formule d'abonnement.</div>
+                @endforelse
+
+                <form wire:submit="ajouterFormule" class="mt-2.5 flex flex-col gap-2">
+                    <label>
+                        <span class="mb-1 block text-[11px] font-semibold text-slate-600">NOMBRE DE SÉANCES</span>
+                        <input type="number" wire:model="formuleSeances" class="champ-compact w-full" min="2" max="52" step="1" inputmode="numeric" required>
+                    </label>
+                    <label>
+                        <span class="mb-1 block text-[11px] font-semibold text-slate-600">PRIX DU PACK (FCFA)</span>
+                        <input type="number" wire:model="formulePrix" class="champ-compact w-full" min="1" step="any" inputmode="numeric" required>
+                    </label>
+                    <button type="submit" class="btn-primaire" wire:loading.attr="disabled" wire:target="ajouterFormule">Ajouter la formule</button>
+                </form>
+            @endif
+        </section>
     </div>
 </div>

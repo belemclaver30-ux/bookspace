@@ -124,6 +124,12 @@ class User extends Authenticatable
         return $this->hasMany(Evaluation::class, 'client_id');
     }
 
+    /** Abonnements (packs de séances récurrentes) souscrits en tant que client. */
+    public function abonnements(): HasMany
+    {
+        return $this->hasMany(Abonnement::class, 'client_id');
+    }
+
     public function notifications(): HasMany
     {
         return $this->hasMany(AppNotification::class);

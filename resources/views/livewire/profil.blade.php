@@ -8,6 +8,7 @@
             ['utilisateur', 'Informations personnelles', '/profil/compte'],
             ['cle', 'Mot de passe et sécurité', '/profil/securite'],
             $client ? ['coeur', 'Mes favoris', '/profil/favoris'] : null,
+            $client ? ['calendrier', 'Mes abonnements', '/abonnements'] : null,
             $user->estGerant() ? ['revenus', 'Mes revenus', '/profil/revenus'] : null,
         ])),
         'Préférences' => [

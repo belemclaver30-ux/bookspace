@@ -83,6 +83,11 @@ Route::middleware('auth')->group(function () {
         Route::get('reservations/{reservation}', Client\ReservationDetail::class)->name('reservations.detail');
         Route::get('reservations/{reservation}/paiement', Client\Paiement::class)->name('reservations.paiement');
         Route::get('reservations/{reservation}/confirmation', Client\Confirmation::class)->name('reservations.confirmation');
+
+        // ─── Abonnements (réservations récurrentes, TDR §8 — amélioration) ──
+        Route::get('abonnements', Client\MesAbonnements::class)->name('abonnements');
+        Route::get('abonnements/{abonnement}/paiement', Client\AbonnementPaiement::class)->name('abonnements.paiement');
+        Route::get('abonnements/{abonnement}/confirmation', Client\AbonnementConfirmation::class)->name('abonnements.confirmation');
     });
 
     // ─── Gérant ──────────────────────────────────────────────────────────────

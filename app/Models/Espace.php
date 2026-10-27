@@ -27,7 +27,7 @@ class Espace extends Model
         'latitude', 'longitude',
         'capacite', 'isolation_phonique',
         'type_pelouse', 'eclairage', 'dimensions',
-        'note_moyenne', 'nb_avis', 'mis_en_avant',
+        'note_moyenne', 'nb_avis', 'mis_en_avant', 'abonnement_actif',
     ];
 
     protected function casts(): array
@@ -39,6 +39,7 @@ class Espace extends Model
             'isolation_phonique' => 'boolean',
             'eclairage' => 'boolean',
             'mis_en_avant' => 'boolean',
+            'abonnement_actif' => 'boolean',
             'latitude' => 'float',
             'longitude' => 'float',
         ];
@@ -90,6 +91,17 @@ class Espace extends Model
     public function reservations(): HasMany
     {
         return $this->hasMany(Reservation::class);
+    }
+
+    public function abonnements(): HasMany
+    {
+        return $this->hasMany(Abonnement::class);
+    }
+
+    /** Formules d'abonnement proposées par le gérant, du plus court au plus long pack. */
+    public function abonnementFormules(): HasMany
+    {
+        return $this->hasMany(EspaceAbonnementFormule::class)->orderBy('nombre_seances');
     }
 
     public function evaluations(): HasMany

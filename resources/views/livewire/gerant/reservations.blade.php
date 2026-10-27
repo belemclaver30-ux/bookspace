@@ -169,6 +169,9 @@
                                     @if ($r->origine === 'gerant')
                                         <span class="ml-1 rounded-full bg-brand-50 px-[7px] py-0.5 text-[10px] font-bold text-brand-dark">Ajoutée manuellement</span>
                                     @endif
+                                    @if ($r->abonnement_id)
+                                        <span class="ml-1 rounded-full bg-gold/15 px-[7px] py-0.5 text-[10px] font-bold text-brand-dark">Abonnement</span>
+                                    @endif
                                 </div>
                             </div>
                             <x-badge-statut :statut="$r->statut" />
