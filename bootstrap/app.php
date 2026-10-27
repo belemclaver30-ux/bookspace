@@ -12,6 +12,10 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // Derrière le proxy de l'hébergeur (Railway) : faire confiance à X-Forwarded-*
+        // pour que les URL générées et la détection HTTPS soient correctes.
+        $middleware->trustProxies(at: '*');
+
         $middleware->alias([
             'role' => \App\Http\Middleware\VerifieRole::class,
         ]);
